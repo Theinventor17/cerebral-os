@@ -1,4 +1,5 @@
 # CEREBRAL OS
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/855ea245-704c-4fc4-8ff0-d7a52b89be72" />
 
 **Cerebral OS** is a standalone desktop app for **thought-assisted AI agent orchestration**: a local-first IDE-style workspace with agent chat, composer workflows, integrated terminal, workspace file tools, optional skill marketplace integration, and optional **EMOTIV / Cortex** headset support for neural input.
 
