@@ -35,10 +35,94 @@ export function KeyboardShortcutsScreen(): ReactNode {
     <div className="ra-screen" style={{ padding: 16, maxWidth: 720 }}>
       <h1 className="ra-h1">Keyboard shortcuts</h1>
       <p className="ra-mute" style={{ fontSize: 12, lineHeight: 1.45, marginTop: 0, marginBottom: 16 }}>
-        Menus in the top bar list many <strong>Ctrl+</strong> shortcuts (e.g. File, Edit, View). On <strong>macOS</strong>, the same
-        menu items often use <strong>⌘</strong> where the app shows <strong>Ctrl+</strong>. Not every menu item is fully wired
-        — prefer actions that are labeled as available.
+        On <strong>macOS</strong>, use <strong>⌘</strong> where this page and the menus show <strong>Ctrl+</strong>. The menu only shows shortcuts for
+        actions that are wired. The table below matches those globals; when the command palette is open, other globals are
+        ignored so you can type, but <Kbd>F5</Kbd> (terminal) and <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>P</Kbd> (toggle palette) still work.
+        <Kbd>Ctrl</Kbd> + <Kbd>N</Kbd> and <Kbd>Ctrl</Kbd> + <Kbd>O</Kbd> are not handled while focus is in the agent chat composer.
       </p>
+
+      <h2 className="ra-h1" style={{ fontSize: 14, margin: '0 0 8px' }}>
+        Global (desktop IDE)
+      </h2>
+      <table
+        className="ra-mute"
+        style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 20 }}
+      >
+        <tbody>
+          <Row
+            action="Command palette — open (quick)"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>P</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Command palette — open; same as menu Find / Show commands"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>F</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="New editor tab (untitled)"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>N</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Open file…"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>O</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Show Explorer (activity)"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>E</Kbd> or <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>F</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Show Agents"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>D</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Show Problems (activity) + open output-style panel tab"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>M</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Output panel (bottom)"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>U</Kbd>
+              </>
+            }
+          />
+          <Row
+            action="Show integrated terminal (bottom)"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>`</Kbd> · <Kbd>F5</Kbd> · <Kbd>Ctrl</Kbd> + <Kbd>F5</Kbd>
+              </>
+            }
+          />
+        </tbody>
+      </table>
 
       <h2 className="ra-h1" style={{ fontSize: 14, margin: '0 0 8px' }}>
         Command palette

@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { IdeCommandPalette } from './IdeCommandPalette'
 import { useNavigate } from 'react-router-dom'
 import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import type { SessionMode } from '@/types'
+import { useCerebralLayout } from '../context/CerebralTabContext'
 import { useIdeLayoutRuntime } from '../layout/IdeLayoutRuntimeContext'
+import { useIdeWorkspaceFileActions } from './ideWorkspaceFileActions'
 import { IDEMenubar } from './IDEMenubar'
 import { WindowChromeControls } from './WindowChromeControls'
 
@@ -67,10 +69,15 @@ function LayoutToggles(): ReactNode {
 
 export function CommandBar(): ReactNode {
   const nav = useNavigate()
+  const { setActivity, setBottomTab, openTab } = useCerebralLayout()
+  const { onOpenFilePicker } = useIdeWorkspaceFileActions()
+  const { bottomPanelRef, vertGroupRef } = useIdeLayoutRuntime()
   const { sessionMode, setSessionMode, localOnly, activeAgent, headsetLive, cortex, signalLock, eegLine, insightLive } =
     useResonantAgents()
   const [provName, setProvName] = useState('—')
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const paletteOpenRef = useRef(false)
+  paletteOpenRef.current = paletteOpen
 
   const cycleMode = useCallback(() => {
     const order: SessionMode[] = ['manual', 'hybrid', 'thought']
@@ -109,20 +116,112 @@ export function CommandBar(): ReactNode {
   const openPalette = useCallback(() => setPaletteOpen(true), [])
   const closePalette = useCallback(() => setPaletteOpen(false), [])
 
+  const showBottomPanel = useCallback(
+    (tab: 'terminal' | 'plogs') => {
+      setBottomTab(tab)
+      bottomPanelRef.current?.expand()
+      vertGroupRef.current?.setLayout({ main: 60, bottom: 40 })
+    },
+    [setBottomTab, bottomPanelRef, vertGroupRef]
+  )
+
   const openHeadsetsDeepLink = useCallback(() => {
     void nav('/cerebral/ide?headsets=1', { replace: true })
   }, [nav])
 
   useEffect(() => {
+    const surface = (t: EventTarget | null) => {
+      if (!(t instanceof Element)) {
+        return { inPalette: false, inComposer: false }
+      }
+      return {
+        inPalette: Boolean(t.closest('.cos-cmd-pal')),
+        inComposer: Boolean(t.closest('.ccomp-textarea'))
+      }
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'p' && e.shiftKey && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         setPaletteOpen((o) => !o)
+        return
+      }
+      if (e.key === 'F5' && !e.shiftKey) {
+        e.preventDefault()
+        showBottomPanel('terminal')
+        return
+      }
+      if (paletteOpenRef.current) {
+        return
+      }
+      const m = e.ctrlKey || e.metaKey
+      if (!m) {
+        return
+      }
+      const { inPalette, inComposer } = surface(e.target)
+      if (inPalette) {
+        return
+      }
+      const k = e.key.toLowerCase()
+      if (k === 'p' && !e.shiftKey) {
+        e.preventDefault()
+        setPaletteOpen(true)
+        return
+      }
+      if (k === 'f' && !e.shiftKey && !inComposer) {
+        e.preventDefault()
+        setPaletteOpen(true)
+        return
+      }
+      if (k === 'n' && !e.shiftKey && !inComposer) {
+        e.preventDefault()
+        openTab({
+          id: `cosf:__untitled__${Date.now()}`,
+          title: 'Untitled',
+          type: 'code',
+          data: { path: '__untitled__' }
+        })
+        return
+      }
+      if (k === 'o' && !e.shiftKey && !inComposer) {
+        e.preventDefault()
+        void onOpenFilePicker()
+        return
+      }
+      if (k === 'e' && e.shiftKey) {
+        e.preventDefault()
+        setActivity('explorer')
+        return
+      }
+      if (k === 'f' && e.shiftKey) {
+        e.preventDefault()
+        setActivity('explorer')
+        return
+      }
+      if (k === 'd' && e.shiftKey) {
+        e.preventDefault()
+        setActivity('agents')
+        return
+      }
+      if (k === 'm' && e.shiftKey) {
+        e.preventDefault()
+        setActivity('logs')
+        showBottomPanel('plogs')
+        return
+      }
+      if (k === 'u' && e.shiftKey) {
+        e.preventDefault()
+        showBottomPanel('plogs')
+        return
+      }
+      if (e.key === '`' || (e as KeyboardEvent & { code?: string }).code === 'Backquote') {
+        e.preventDefault()
+        showBottomPanel('terminal')
+        return
       }
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
-  }, [])
+  }, [onOpenFilePicker, openTab, setActivity, showBottomPanel])
 
   return (
     <header className="cos-cmd" role="banner">

@@ -6,6 +6,7 @@ import { useCerebralLayout } from '../context/CerebralTabContext'
 import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import { emotivCortex } from '@/services/EmotivCortexService'
 import { useIdeLayoutRuntime } from '../layout/IdeLayoutRuntimeContext'
+import { useIdeWorkspaceFileActions } from './ideWorkspaceFileActions'
 
 type Item =
   | {
@@ -28,6 +29,7 @@ function MenuRow({ item, close }: { item: Item; close: () => void }): ReactNode 
   }
   const { label, shortcut, disabled, sub, onSelect } = item
   const isDisabled = !!disabled || (!!sub && !onSelect)
+  const showShortcut = Boolean(shortcut && !sub && !isDisabled)
   return (
     <button
       type="button"
@@ -46,23 +48,9 @@ function MenuRow({ item, close }: { item: Item; close: () => void }): ReactNode 
         {label}
         {sub && <span className="cos-menu-chevron">▸</span>}
       </span>
-      {shortcut && !sub ? <MenuShortcut k={shortcut} /> : <span className="cos-menu-shortcut" />}
+      {showShortcut ? <MenuShortcut k={shortcut!} /> : <span className="cos-menu-shortcut" />}
     </button>
   )
-}
-
-function absToWorkspaceRel(fileAbs: string, root: string): string | null {
-  const f = fileAbs.replace(/\\/g, '/')
-  const r = root.replace(/\\/g, '/').replace(/\/$/, '')
-  if (f.length < r.length + 2) {
-    return null
-  }
-  const fl = f.toLowerCase()
-  const rl = r.toLowerCase()
-  if (!fl.startsWith(rl + '/')) {
-    return null
-  }
-  return f.slice(r.length + 1)
 }
 
 function runEdit(cmd: 'copy' | 'cut' | 'paste' | 'undo' | 'redo' | 'selectAll'): void {
@@ -94,8 +82,9 @@ function runEdit(cmd: 'copy' | 'cut' | 'paste' | 'undo' | 'redo' | 'selectAll'):
 
 export function IDEMenubar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }): ReactNode {
   const nav = useNavigate()
-  const { openTab, openBrowserTab, setActivity, setBottomTab, closeTab, activeTabId, workspaceRoot, tabs, setActiveTabId } = useCerebralLayout()
-  const { refresh, headset, cortex, eegLine } = useResonantAgents()
+  const { openTab, openBrowserTab, setActivity, setBottomTab, closeTab, activeTabId } = useCerebralLayout()
+  const { onOpenFilePicker, onOpenProjectFolder } = useIdeWorkspaceFileActions()
+  const { headset, cortex, eegLine } = useResonantAgents()
   const { bottomPanelRef, vertGroupRef } = useIdeLayoutRuntime()
   const [open, setOpen] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -129,25 +118,6 @@ export function IDEMenubar({ onOpenCommandPalette }: { onOpenCommandPalette: () 
     openTab({ id: CEREBRAL_HEADSETS_TAB_ID, title: 'Headsets', type: 'headsets', data: {} })
   }, [openTab, setActivity])
 
-  const onOpenProjectFolder = useCallback(async () => {
-    const c = window.cerebral
-    if (!c?.workspace?.pickDirectory) {
-      return
-    }
-    const r = await c.workspace.pickDirectory()
-    if (r?.path) {
-      const setR = await c.workspace.setRoot({ rootPath: r.path })
-      if (setR.ok) {
-        try {
-          localStorage.setItem('cerebral.lastRootHint', r.path)
-        } catch {
-          // ignore
-        }
-        void refresh()
-      }
-    }
-  }, [refresh])
-
   const onToggleDevtools = useCallback(() => {
     void window.cerebral?.window?.toggleDevtools?.()
   }, [])
@@ -163,197 +133,102 @@ export function IDEMenubar({ onOpenCommandPalette }: { onOpenCommandPalette: () 
     void window.cerebral?.shell?.openExternal?.(u)
   }, [])
 
-  const onOpenFilePicker = useCallback(async () => {
-    const c = window.cerebral
-    if (!c?.pickWorkspaceFile) {
-      return
-    }
-    const { path: abs } = await c.pickWorkspaceFile()
-    if (!abs) {
-      return
-    }
-    if (!workspaceRoot) {
-      window.alert('Set a project folder first (File → Open Folder…).')
-      return
-    }
-    const rel = absToWorkspaceRel(abs, workspaceRoot)
-    if (!rel) {
-      window.alert('Choose a file inside the current project folder.')
-      return
-    }
-    const norm = rel.replace(/\\/g, '/')
-    const ex = tabs.find(
-      (x) => x.type === 'code' && String(x.data?.['path'] ?? '').replace(/\\/g, '/') === norm
-    )
-    if (ex) {
-      setActiveTabId(ex.id)
-      return
-    }
-    openTab({
-      id: `cosf:${encodeURIComponent(norm)}`,
-      title: norm.split('/').pop() || norm,
-      type: 'code',
-      data: { path: norm }
-    })
-  }, [openTab, setActiveTabId, tabs, workspaceRoot])
-
   const fileSections: Item[][] = useMemo(
     () => [
-    [
-      {
-        type: 'item',
-        label: 'New Text File',
-        shortcut: 'Ctrl+N',
-        onSelect: () =>
-          openTab({
-            id: `cosf:__untitled__${Date.now()}`,
-            title: 'Untitled',
-            type: 'code',
-            data: { path: '__untitled__' }
-          })
-      },
-      { type: 'item', label: 'New Window', shortcut: 'Ctrl+Shift+N', disabled: true },
-      { type: 'item', label: 'New Window with Profile', sub: true, disabled: true }
-    ],
-    [
-      {
-        type: 'item',
-        label: 'Open File…',
-        shortcut: 'Ctrl+O',
-        onSelect: () => {
-          void onOpenFilePicker()
+      [
+        {
+          type: 'item',
+          label: 'New Text File',
+          shortcut: 'Ctrl+N',
+          onSelect: () =>
+            openTab({
+              id: `cosf:__untitled__${Date.now()}`,
+              title: 'Untitled',
+              type: 'code',
+              data: { path: '__untitled__' }
+            })
+        },
+        {
+          type: 'item',
+          label: 'Open File…',
+          shortcut: 'Ctrl+O',
+          onSelect: () => void onOpenFilePicker()
+        },
+        {
+          type: 'item',
+          label: 'Open Folder…',
+          onSelect: () => void onOpenProjectFolder()
         }
-      },
-      {
-        type: 'item',
-        label: 'Open Folder…',
-        shortcut: 'Ctrl+K Ctrl+O',
-        onSelect: () => {
-          void onOpenProjectFolder()
-        }
-      },
-      { type: 'item', label: 'Open Workspace from File…', disabled: true },
-      { type: 'item', label: 'Open Recent', sub: true, disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Add Folder to Workspace…', disabled: true },
-      { type: 'item', label: 'Save Workspace As…', disabled: true },
-      { type: 'item', label: 'Duplicate Workspace', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Save', shortcut: 'Ctrl+S', disabled: true },
-      { type: 'item', label: 'Save As…', shortcut: 'Ctrl+Shift+S', disabled: true },
-      { type: 'item', label: 'Save All', shortcut: 'Ctrl+K S', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Share', sub: true, disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Auto Save', disabled: true },
-      {
-        type: 'item',
-        label: 'Preferences',
-        onSelect: () => {
-          setActivity('settings')
-          openTab({
-            id: crypto.randomUUID(),
-            title: 'settings.json (UI)',
-            type: 'settings',
-            data: { view: 'general' }
-          })
-        }
-      }
-    ],
-    [
-      { type: 'item', label: 'Revert File', disabled: true },
-      {
-        type: 'item',
-        label: 'Close Editor',
-        shortcut: 'Ctrl+F4',
-        disabled: !activeTabId,
-        onSelect: () => {
-          if (activeTabId) {
-            closeTab(activeTabId)
+      ],
+      [
+        {
+          type: 'item',
+          label: 'Preferences',
+          onSelect: () => {
+            setActivity('settings')
+            openTab({
+              id: crypto.randomUUID(),
+              title: 'settings.json (UI)',
+              type: 'settings',
+              data: { view: 'general' }
+            })
           }
         }
-      },
-      { type: 'item', label: 'Close Folder', shortcut: 'Ctrl+K F', disabled: true },
-      {
-        type: 'item',
-        label: 'Close Window',
-        shortcut: 'Alt+F4',
-        onSelect: () => void window.cerebral?.window?.close?.()
-      }
-    ],
-    [{ type: 'item', label: 'Exit', onSelect: () => void window.cerebral?.app?.quit?.() }]
+      ],
+      [
+        {
+          type: 'item',
+          label: 'Close Editor',
+          disabled: !activeTabId,
+          onSelect: () => {
+            if (activeTabId) {
+              closeTab(activeTabId)
+            }
+          }
+        },
+        {
+          type: 'item',
+          label: 'Close Window',
+          shortcut: 'Alt+F4',
+          onSelect: () => void window.cerebral?.window?.close?.()
+        }
+      ],
+      [{ type: 'item', label: 'Exit', onSelect: () => void window.cerebral?.app?.quit?.() }]
     ],
     [activeTabId, closeTab, onOpenFilePicker, onOpenProjectFolder, openTab, setActivity]
   )
 
   const editSections: Item[][] = useMemo(
     () => [
-    [
-      {
-        type: 'item',
-        label: 'Undo',
-        shortcut: 'Ctrl+Z',
-        onSelect: () => runEdit('undo')
-      },
-      {
-        type: 'item',
-        label: 'Redo',
-        shortcut: 'Ctrl+Y',
-        onSelect: () => runEdit('redo')
-      }
+      [
+        {
+          type: 'item',
+          label: 'Undo',
+          shortcut: 'Ctrl+Z',
+          onSelect: () => runEdit('undo')
+        },
+        {
+          type: 'item',
+          label: 'Redo',
+          shortcut: 'Ctrl+Y',
+          onSelect: () => runEdit('redo')
+        }
+      ],
+      [
+        { type: 'item', label: 'Cut', shortcut: 'Ctrl+X', onSelect: () => runEdit('cut') },
+        { type: 'item', label: 'Copy', shortcut: 'Ctrl+C', onSelect: () => runEdit('copy') },
+        { type: 'item', label: 'Paste', shortcut: 'Ctrl+V', onSelect: () => runEdit('paste') }
+      ],
+      [{ type: 'item', label: 'Find in chat / command palette', shortcut: 'Ctrl+F', onSelect: () => onOpenCommandPalette() }]
     ],
-    [
-      { type: 'item', label: 'Cut', shortcut: 'Ctrl+X', onSelect: () => runEdit('cut') },
-      { type: 'item', label: 'Copy', shortcut: 'Ctrl+C', onSelect: () => runEdit('copy') },
-      { type: 'item', label: 'Paste', shortcut: 'Ctrl+V', onSelect: () => runEdit('paste') }
-    ],
-    [
-      { type: 'item', label: 'Find', shortcut: 'Ctrl+F', onSelect: () => onOpenCommandPalette() },
-      { type: 'item', label: 'Replace', shortcut: 'Ctrl+H', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Find in Files', shortcut: 'Ctrl+Shift+F', disabled: true },
-      { type: 'item', label: 'Replace in Files', shortcut: 'Ctrl+Shift+H', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Toggle Line Comment', shortcut: 'Ctrl+/', disabled: true },
-      { type: 'item', label: 'Toggle Block Comment', shortcut: 'Shift+Alt+A', disabled: true },
-      { type: 'item', label: 'Emmet: Expand Abbreviation', shortcut: 'Tab', disabled: true }
-    ]
-  ],
-  [onOpenCommandPalette, runEdit]
+    [onOpenCommandPalette, runEdit]
   )
 
   const selectionSections: Item[][] = useMemo(
     () => [
-    [
-      { type: 'item', label: 'Select All', shortcut: 'Ctrl+A', onSelect: () => runEdit('selectAll') },
-      { type: 'item', label: 'Expand Selection', shortcut: 'Shift+Alt+→', disabled: true },
-      { type: 'item', label: 'Shrink Selection', shortcut: 'Shift+Alt+←', disabled: true }
+      [{ type: 'item', label: 'Select All', shortcut: 'Ctrl+A', onSelect: () => runEdit('selectAll') }]
     ],
-    [
-      { type: 'item', label: 'Copy Line Up', shortcut: 'Shift+Alt+↑', disabled: true },
-      { type: 'item', label: 'Copy Line Down', shortcut: 'Shift+Alt+↓', disabled: true },
-      { type: 'item', label: 'Move Line Up', shortcut: 'Alt+↑', disabled: true },
-      { type: 'item', label: 'Move Line Down', shortcut: 'Alt+↓', disabled: true },
-      { type: 'item', label: 'Duplicate Selection', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Add Cursor Above', shortcut: 'Ctrl+Alt+↑', disabled: true },
-      { type: 'item', label: 'Add Cursor Below', shortcut: 'Ctrl+Alt+↓', disabled: true },
-      { type: 'item', label: 'Add Cursors to Line Ends', shortcut: 'Shift+Alt+I', disabled: true },
-      { type: 'item', label: 'Add Next Occurrence', shortcut: 'Ctrl+D', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Switch to Ctrl+Click for Multi-Cursor', disabled: true },
-      { type: 'item', label: 'Column Selection Mode', disabled: true }
-    ]
-  ],
-  [runEdit]
+    [runEdit]
   )
 
   const showBottomPanel = useCallback(
@@ -367,167 +242,128 @@ export function IDEMenubar({ onOpenCommandPalette }: { onOpenCommandPalette: () 
 
   const viewSections: Item[][] = useMemo(
     () => [
-    [
-      {
-        type: 'item',
-        label: 'Command Palette…',
-        shortcut: 'Ctrl+Shift+P',
-        onSelect: () => onOpenCommandPalette()
-      },
-      { type: 'item', label: 'Open View…', onSelect: () => onOpenCommandPalette() }
-    ],
-    [
-      { type: 'item', label: 'Appearance', sub: true, disabled: true },
-      { type: 'item', label: 'Editor Layout', sub: true, disabled: true }
-    ],
-    [
-      {
-        type: 'item',
-        label: 'Explorer',
-        shortcut: 'Ctrl+Shift+E',
-        onSelect: () => {
-          setActivity('explorer')
+      [
+        {
+          type: 'item',
+          label: 'Command Palette…',
+          shortcut: 'Ctrl+Shift+P',
+          onSelect: () => onOpenCommandPalette()
         }
-      },
-      {
-        type: 'item',
-        label: 'Search',
-        shortcut: 'Ctrl+Shift+F',
-        onSelect: () => setActivity('explorer')
-      },
-      { type: 'item', label: 'Source Control', shortcut: 'Ctrl+Shift+G', disabled: true },
-      {
-        type: 'item',
-        label: 'Run',
-        shortcut: 'Ctrl+Shift+D',
-        onSelect: () => setActivity('agents')
-      },
-      { type: 'item', label: 'Extensions', shortcut: 'Ctrl+Shift+X', disabled: true }
+      ],
+      [
+        {
+          type: 'item',
+          label: 'Explorer',
+          shortcut: 'Ctrl+Shift+E',
+          onSelect: () => {
+            setActivity('explorer')
+          }
+        },
+        {
+          type: 'item',
+          label: 'Search (activity)',
+          shortcut: 'Ctrl+Shift+F',
+          onSelect: () => setActivity('explorer')
+        },
+        {
+          type: 'item',
+          label: 'Run / Agents',
+          shortcut: 'Ctrl+Shift+D',
+          onSelect: () => setActivity('agents')
+        }
+      ],
+      [
+        {
+          type: 'item',
+          label: 'Problems (logs)',
+          shortcut: 'Ctrl+Shift+M',
+          onSelect: () => {
+            setActivity('logs')
+            showBottomPanel('plogs')
+          }
+        },
+        {
+          type: 'item',
+          label: 'Output (provider logs)',
+          shortcut: 'Ctrl+Shift+U',
+          onSelect: () => {
+            showBottomPanel('plogs')
+          }
+        },
+        {
+          type: 'item',
+          label: 'Terminal',
+          shortcut: 'Ctrl+`',
+          onSelect: () => {
+            showBottomPanel('terminal')
+          }
+        }
+      ],
+      [
+        {
+          type: 'item',
+          label: 'Simple Browser',
+          onSelect: () => {
+            openBrowserTab()
+          }
+        }
+      ]
     ],
-    [
-      {
-        type: 'item',
-        label: 'Problems',
-        shortcut: 'Ctrl+Shift+M',
-        onSelect: () => {
-          setActivity('logs')
-          showBottomPanel('plogs')
-        }
-      },
-      {
-        type: 'item',
-        label: 'Output',
-        shortcut: 'Ctrl+Shift+U',
-        onSelect: () => {
-          showBottomPanel('plogs')
-        }
-      },
-      { type: 'item', label: 'Debug Console', shortcut: 'Ctrl+Shift+Alt+Y', disabled: true },
-      {
-        type: 'item',
-        label: 'Terminal',
-        shortcut: 'Ctrl+`',
-        onSelect: () => {
-          showBottomPanel('terminal')
-        }
-      }
-    ],
-    [
-      {
-        type: 'item',
-        label: 'Simple Browser',
-        onSelect: () => {
-          openBrowserTab()
-        }
-      }
-    ],
-    [{ type: 'item', label: 'Word Wrap', shortcut: 'Alt+Z', disabled: true }]
-  ],
-  [onOpenCommandPalette, setActivity, showBottomPanel, openBrowserTab]
+    [onOpenCommandPalette, setActivity, showBottomPanel, openBrowserTab]
   )
 
   const goSections: Item[][] = useMemo(
     () => [
-    [
-      { type: 'item', label: 'Back', shortcut: 'Alt+←', disabled: true },
-      { type: 'item', label: 'Forward', shortcut: 'Alt+→', disabled: true },
-      { type: 'item', label: 'Last Edit Location', shortcut: 'Ctrl+K Ctrl+Q', disabled: true }
+      [
+        {
+          type: 'item',
+          label: 'Command palette (quick list)',
+          shortcut: 'Ctrl+P',
+          onSelect: () => onOpenCommandPalette()
+        }
+      ]
     ],
-    [
-      { type: 'item', label: 'Switch Editor', sub: true, disabled: true },
-      { type: 'item', label: 'Switch Group', sub: true, disabled: true }
-    ],
-    [
-      {
-        type: 'item',
-        label: 'Go to File…',
-        shortcut: 'Ctrl+P',
-        onSelect: () => onOpenCommandPalette()
-      },
-      { type: 'item', label: 'Go to Symbol in Workspace…', shortcut: 'Ctrl+T', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Go to Symbol in Editor…', shortcut: 'Ctrl+Shift+O', disabled: true },
-      { type: 'item', label: 'Go to Definition', shortcut: 'F12', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Go to Line/Column…', shortcut: 'Ctrl+G', disabled: true },
-      { type: 'item', label: 'Go to Bracket', shortcut: 'Ctrl+Shift+\\', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Next Problem', shortcut: 'F8', disabled: true },
-      { type: 'item', label: 'Previous Problem', shortcut: 'Shift+F8', disabled: true }
-    ]
-  ],
-  [onOpenCommandPalette]
+    [onOpenCommandPalette]
   )
 
   const runSections: Item[][] = useMemo(
     () => [
-    [
-      {
-        type: 'item',
-        label: 'Start Debugging',
-        shortcut: 'F5',
-        onSelect: () => {
-          setBottomTab('terminal')
-          bottomPanelRef.current?.expand()
-          vertGroupRef.current?.setLayout({ main: 60, bottom: 40 })
+      [
+        {
+          type: 'item',
+          label: 'Start Debugging',
+          shortcut: 'F5',
+          onSelect: () => {
+            setBottomTab('terminal')
+            bottomPanelRef.current?.expand()
+            vertGroupRef.current?.setLayout({ main: 60, bottom: 40 })
+          }
+        },
+        {
+          type: 'item',
+          label: 'Run Without Debugging',
+          shortcut: 'Ctrl+F5',
+          onSelect: () => {
+            setBottomTab('terminal')
+            bottomPanelRef.current?.expand()
+            vertGroupRef.current?.setLayout({ main: 60, bottom: 40 })
+          }
         }
-      },
-      {
-        type: 'item',
-        label: 'Run Without Debugging',
-        shortcut: 'Ctrl+F5',
-        onSelect: () => {
-          setBottomTab('terminal')
-          bottomPanelRef.current?.expand()
-          vertGroupRef.current?.setLayout({ main: 60, bottom: 40 })
-        }
-      }
+      ]
     ],
-    [
-      { type: 'item', label: 'Toggle Breakpoint', shortcut: 'F9', disabled: true },
-      { type: 'item', label: 'New Breakpoint', sub: true, disabled: true }
-    ],
-    [{ type: 'item', label: 'Install Additional Debuggers…', disabled: true }]
-  ],
-  [setBottomTab, bottomPanelRef, vertGroupRef]
+    [setBottomTab, bottomPanelRef, vertGroupRef]
   )
 
   const terminalSections: Item[][] = [
     [
       {
         type: 'item',
-        label: 'New Terminal',
+        label: 'New Terminal (focus bottom)',
         onSelect: () => {
           setBottomTab('terminal')
           bottomPanelRef.current?.expand()
         }
       },
-      { type: 'item', label: 'Split Terminal', disabled: true }
-    ],
-    [
       {
         type: 'item',
         label: 'Scroll to Bottom',
@@ -578,16 +414,14 @@ export function IDEMenubar({ onOpenCommandPalette }: { onOpenCommandPalette: () 
   ]
 
   const helpSections: Item[][] = [
+    [{ type: 'item', label: 'Show All Commands', shortcut: 'Ctrl+Shift+P', onSelect: () => onOpenCommandPalette() }],
     [
-      { type: 'item', label: 'Show All Commands', shortcut: 'Ctrl+Shift+P', onSelect: () => onOpenCommandPalette() },
-      { type: 'item', label: 'Get Started with Accessibility', disabled: true }
+      { type: 'item', label: 'Keyboard shortcuts (in-app)', onSelect: () => {
+        setActivity('settings')
+        openTab({ id: crypto.randomUUID(), title: 'Keyboard shortcuts', type: 'settings', data: { view: 'keyboard-shortcuts' } })
+      } }
     ],
-    [
-      { type: 'item', label: 'Give Feedback…', disabled: true }
-    ],
-    [
-      { type: 'item', label: 'Toggle Developer Tools', onSelect: onToggleDevtools }
-    ],
+    [{ type: 'item', label: 'Toggle Developer Tools', onSelect: onToggleDevtools }],
     [{ type: 'item', label: 'About CEREBRAL OS', onSelect: () => void onAbout() }]
   ]
 
