@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 const MAX_LINES = 4000
 
 function formatPrompt(p: string): string {
-  return p.replace(/\//g, '\\')
+  if (typeof navigator !== 'undefined' && /Win/i.test(navigator.userAgent)) {
+    return p.replace(/\//g, '\\')
+  }
+  return p.replace(/\\/g, '/')
 }
 
 /** Empty or `'.'` means "use workspace / backend default" — do not run commands in process cwd. */

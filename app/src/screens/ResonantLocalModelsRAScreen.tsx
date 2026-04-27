@@ -32,7 +32,7 @@ export function ResonantLocalModelsRAScreen() {
               n[i] = e.target.value
               setPaths(n)
             }}
-            placeholder="C:\models\file.gguf"
+            placeholder="/home/you/models/file.gguf — or C:/models/file.gguf"
           />
         </div>
       ))}

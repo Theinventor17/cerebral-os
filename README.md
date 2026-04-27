@@ -45,19 +45,41 @@ npm run dev
 - The **Electron window** opens automatically. This is a **desktop app**, not a generic browser session: folder pickers, terminal, and workspace APIs need the Electron shell.
 - If port `5173` is busy, the Vite dev server may use another port (e.g. `5174`); the main process loads the correct URL.
 
+### Linux (development)
+
+Run from a normal user session (not a minimal container without a display). Install compiler toolchain and headers so native modules compile on `npm install`:
+
+| Distro / env | Typical packages |
+|----------------|------------------|
+| **Debian / Ubuntu** | `build-essential`, `python3` (or `python-is-python3`), and often `libnss3` / `libatk` pulled in with Electron. |
+| **Fedora** | `@development-tools` (or `gcc-c++` `make` `python3`) |
+| **Arch** | `base-devel` `python` |
+
+If `better-sqlite3` or `node-pty` fails to build, run `npm run rebuild:sqlite` and `npm run rebuild:pty` after ensuring the toolchain matches your Node version.
+
+- **PTy / shell** uses your `$SHELL` or `/bin/bash` (login shell) on Linux, same as a normal terminal.
+- **Packaging on Linux** (native): `npm run build:linux` produces **AppImage** and **.deb** under `release/`. On other OSes, build Linux artifacts in a Linux VM/CI, or use Dockerized `electron-builder` if you need cross-compilation.
+
 ### Production build (installers / artifacts)
 
 ```bash
 npm run build
 ```
 
-Outputs are configured under `release/` (see `package.json` → `build.directories.output`). Adjust `electron-builder` targets in config if you need platform-specific installers beyond the default.
+On the **current** OS this runs `electron-builder` with the matching targets (e.g. Windows NSIS on Windows, AppImage+deb on Linux, dmg on macOS). Outputs are under `release/` (see `package.json` → `build`).
+
+| Command | When to use |
+|---------|-------------|
+| `npm run build` | Full app + installer for the **host** platform. |
+| `npm run build:linux` | Linux only: AppImage + deb (run on a **Linux** machine, or a Linux CI job). |
+| `npm run build:app` | Compile main/preload/renderer only (no `electron-builder`). |
 
 ### Other scripts
 
 | Script | Purpose |
 |--------|---------|
 | `npm run build:app` | Build main/preload/renderer without running `electron-builder`. |
+| `npm run build:linux` | On **Linux** only: AppImage + deb (see **Linux (development)** above). |
 | `npm run typecheck` | TypeScript check (`tsconfig.app.json`). |
 | `npm run rebuild:sqlite` / `npm run rebuild:pty` | Rebuild native modules after Node/Electron changes. |
 | `npm run refresh:skills` | Regenerate bundled skills catalog (see `scripts/`). |

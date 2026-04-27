@@ -12,6 +12,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build && electron-builder",
     "build:app": "electron-vite build",
+    "build:linux": "electron-vite build && electron-builder --linux",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "refresh:skills": "node scripts/generate-claude-skills-catalog.mjs"
@@ -59,6 +60,32 @@
     "asar": true,
     "asarUnpack": [
       "**/*.node"
-    ]
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development",
+      "synopsis": "Thought-assisted AI agent IDE",
+      "description": "Local-first IDE for agent chat, workspace tools, and optional EMOTIV / Cortex support.",
+      "maintainer": "CEREBRAL OS <noreply@example.com>",
+      "desktop": {
+        "Name": "CEREBRAL OS",
+        "Comment": "Thought-assisted AI agent orchestration"
+      }
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools"
+    }
   }
 }
