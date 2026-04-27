@@ -33,8 +33,8 @@ export function OnboardingBanner(): ReactNode {
     <div className="cos-onboard" role="region" aria-label="Getting started">
       <div className="cos-onboard-inner">
         <p className="cos-onboard-text">
-          <strong>Finish setup:</strong> open <span className="cos-onboard-kb">Providers</span> in the left bar to add a model
-          (Ollama, OpenRouter, or an API). Neural headset control is <strong>optional</strong> — use{' '}
+          <strong>Finish setup:</strong> open <span className="cos-onboard-kb">◫ Providers</span> for models and API keys (one
+          form per provider—no separate keys screen). Neural control is <strong>optional</strong> —{' '}
           <span className="cos-onboard-kb" title="Headsets activity">
             ◎ Headsets
           </span>{' '}

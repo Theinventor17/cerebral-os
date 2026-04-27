@@ -22,6 +22,7 @@ import type { CerebralActivityId } from '../types/cerebral.ts'
 import { ConversationListRow } from '@/components/ConversationListRow'
 import type { AgentSession, ResonantAgent } from '@/types'
 import { formatSessionListTime } from '@/services/sessionTitle'
+import { ProviderSetupMap } from '../components/ProviderSetupMap'
 
 const AGENT_ORDER = ['forge', 'harmony', 'lumen', 'nexus', 'oracle', 'sage', 'sentinel']
 function sortAgents(agents: ResonantAgent[]): ResonantAgent[] {
@@ -274,6 +275,7 @@ export function SidePanel(): ReactNode {
       <aside className="cos-side" aria-label="Providers">
         <div className="cos-sh">Model providers</div>
         <div className="cos-sbody">
+          <ProviderSetupMap variant="side" />
           <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: '0 0 6px 0' }}>Test with “Reply only with OK.” in provider settings.</p>
           {provs.length === 0 && <p className="cos-mono">Loading…</p>}
           {provs.map((p) => (

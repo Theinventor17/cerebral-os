@@ -60,6 +60,10 @@ export function CerebralWelcome(): ReactNode {
     nav('/cerebral/ide?headsets=1')
   }, [nav])
 
+  const goIdeApiKeys = useCallback(() => {
+    nav('/cerebral/ide?keys=1')
+  }, [nav])
+
   const applyRoot = useCallback(
     async (rootPath: string, displayName?: string) => {
       setBusy(true)
@@ -195,9 +199,13 @@ export function CerebralWelcome(): ReactNode {
             <li>
               <span className="cw-quickstart-step">2</span>
               <div>
-                <strong>One model provider</strong> — add Ollama, OpenRouter, or an API key in Providers.{' '}
+                <strong>One model provider</strong> — add Ollama, OpenRouter, or paste an API key (keys live in each
+                provider’s form, not a separate screen).{' '}
                 <button type="button" className="cw-link" disabled={busy} onClick={goIdeProviders}>
-                  Open Providers in IDE
+                  Open Providers
+                </button>{' '}
+                <button type="button" className="cw-link" disabled={busy} onClick={goIdeApiKeys}>
+                  API key map
                 </button>
               </div>
             </li>

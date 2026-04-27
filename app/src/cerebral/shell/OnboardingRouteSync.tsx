@@ -4,7 +4,7 @@ import { CEREBRAL_HEADSETS_TAB_ID } from '../headsetsTabConstants'
 import { useCerebralLayout } from '../context/CerebralTabContext'
 
 /**
- * Deep-link from welcome: #/cerebral/ide?headsets=1 or ?providers=1
+ * Deep-link from welcome: #/cerebral/ide?headsets=1 or ?providers=1 or ?keys=1 (keys → providers)
  * Query is cleared after handling so the URL stays clean.
  */
 export function OnboardingRouteSync(): null {
@@ -14,7 +14,8 @@ export function OnboardingRouteSync(): null {
   useEffect(() => {
     const h = searchParams.get('headsets')
     const p = searchParams.get('providers')
-    if (h !== '1' && p !== '1') {
+    const k = searchParams.get('keys')
+    if (h !== '1' && p !== '1' && k !== '1') {
       return
     }
     if (h === '1') {

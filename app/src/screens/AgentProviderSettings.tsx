@@ -5,6 +5,7 @@ import { newId, rowToProvider } from '../services/mappers'
 import { LMStudioService } from '../services/LMStudioService'
 import { useResonantAgents } from '../providers/ResonantAgentsProvider'
 import { OPENROUTER_CHAT_SAFE_PRESETS } from '../constants/openRouterChatSafePresets'
+import { ProviderSetupMap } from '@/cerebral/components/ProviderSetupMap'
 
 const TYPES: ProviderType[] = [
   'ollama',
@@ -137,6 +138,7 @@ export function AgentProviderSettings() {
   return (
     <div className="ra-screen" style={{ padding: 16 }}>
       <h1 className="ra-h1">Model providers</h1>
+      <ProviderSetupMap variant="screen" />
       <p className="ra-mute" style={{ marginTop: 0 }}>
         API keys are stored in secure storage, never written to logs, and masked in the UI. Test sends: “Reply only with OK.”
       </p>

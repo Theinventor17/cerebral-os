@@ -26,6 +26,7 @@ import {
   type NormalizedEEGFrame
 } from '@/cerebral/headsets'
 import type { WorkspaceAction } from '@/cerebral/workspace/WorkspaceTypes'
+import { COPY_INSIGHT_OFF_THOUGHT } from '@/cerebral/copy/insightModeCopy'
 
 const CMDS: ThoughtCommandName[] = [
   'focus_agent',
@@ -617,7 +618,7 @@ export function ResonantAgentsProvider({ children }: { children: ReactNode }): R
         return
       }
       if (sessionMode === 'thought' && !insightLive) {
-        setSendError('Thought mode needs a live EMOTIV Insight signal. Switch to Manual or Hybrid, or connect Insight in Headsets (◎ activity).')
+        setSendError(COPY_INSIGHT_OFF_THOUGHT)
         return
       }
       if (sessionMode === 'hybrid' && !insightLive) {

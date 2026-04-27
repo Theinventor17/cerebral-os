@@ -119,7 +119,10 @@ export function IDEBottomPanel(): ReactNode {
                 {cortex.ok ? 'OK' : 'Unavailable'}
               </div>
             </div>
-            <p className="cide-b-empty">Configure OpenRouter, OpenAI, Anthropic, Gemini, Ollama, LM Studio, llama.cpp, custom, GGUF in Providers.</p>
+            <p className="cide-b-empty">
+              Configure OpenRouter, OpenAI, Anthropic, Gemini, Ollama, LM Studio, llama.cpp, custom, and GGUF in ◫
+              Providers—API keys are saved per provider in each provider’s settings, not on a separate screen.
+            </p>
           </div>
         )}
         {tab === 'approvals' && (

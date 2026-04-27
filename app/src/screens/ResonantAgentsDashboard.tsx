@@ -4,6 +4,7 @@ import { useResonantAgents, CMDS } from '../providers/ResonantAgentsProvider'
 import { RAAvatar } from '../components/RAIcons'
 import { RAPermissionGateModal } from '../components/RAPermissionGateModal'
 import type { AgentMemoryEntry, AgentMessage, ResonantAgent, SessionMode } from '../types'
+import { COPY_INSIGHT_OFF_HYBRID, COPY_INSIGHT_OFF_THOUGHT } from '@/cerebral/copy/insightModeCopy'
 
 const suggestions = [
   'Decompose my tasks',
@@ -281,9 +282,10 @@ function ChannelPanel() {
     sending,
     sendError,
     sessionMode,
+    setSessionMode,
     endSession,
     demoMode,
-    headsetLive
+    insightLive
   } = useResonantAgents()
   const [tab, setTab] = useState<'chat' | 'insights' | 'memory' | 'goals'>('chat')
   const [input, setInput] = useState('')
@@ -298,7 +300,7 @@ function ChannelPanel() {
     return []
   }, [messages, activeAgent, demoMode])
 
-  const thoughtBlocked = sessionMode === 'thought' && !headsetLive
+  const thoughtBlocked = sessionMode === 'thought' && !insightLive
 
   if (!activeAgent) {
     return <div className="ra-panel">Select an agent.</div>
@@ -357,10 +359,21 @@ function ChannelPanel() {
               : 'Send a message to start. Chat works without a headset in Manual or Hybrid mode.'}
           </p>
         )}
-        {thoughtBlocked && (
-          <p className="ra-err" style={{ padding: 8 }}>
-            Thought mode requires a connected headset. Switch to Manual or Hybrid to type.
+        {sessionMode === 'hybrid' && !insightLive && (
+          <p className="ra-mute" style={{ padding: '4px 8px 0', fontSize: 12, lineHeight: 1.45 }}>
+            {COPY_INSIGHT_OFF_HYBRID}
           </p>
+        )}
+        {thoughtBlocked && (
+          <div className="ra-err" style={{ padding: 8 }}>
+            <p style={{ margin: '0 0 6px 0', lineHeight: 1.45 }}>{COPY_INSIGHT_OFF_THOUGHT}</p>
+            <button type="button" className="ra-btn ra-btn-ghost" style={{ marginRight: 8 }} onClick={() => void setSessionMode('hybrid')}>
+              Switch to Hybrid
+            </button>
+            <button type="button" className="ra-btn ra-btn-ghost" onClick={() => void setSessionMode('manual')}>
+              Switch to Manual
+            </button>
+          </div>
         )}
         {tab !== 'chat' && <div className="ra-mute">Insights / memory / goals views are placeholders for this module.</div>}
         {sendError && <div className="ra-err">{sendError}</div>}

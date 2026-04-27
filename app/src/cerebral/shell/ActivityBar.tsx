@@ -8,7 +8,7 @@ const IT: { id: CerebralActivityId; ico: string; title: string }[] = [
   { id: 'agents', ico: '◇', title: 'Agents' },
   { id: 'swarms', ico: '⬡', title: 'Swarms' },
   { id: 'skills', ico: '✦', title: 'Skills' },
-  { id: 'providers', ico: '◫', title: 'Providers' },
+  { id: 'providers', ico: '◫', title: 'Providers (models & API keys)' },
   { id: 'memory', ico: '▣', title: 'Memory' },
   { id: 'headsets', ico: '◎', title: 'Headsets' },
   { id: 'logs', ico: '≋', title: 'Logs' },

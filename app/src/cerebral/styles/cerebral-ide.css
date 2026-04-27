@@ -1613,6 +1613,54 @@ button.cos-chip:hover {
   font-size: 12px;
   margin: 8px 14px 0;
 }
+.ccomp-err--one {
+  margin: 0 0 6px 0;
+  line-height: 1.45;
+}
+.ccomp-hint--insight {
+  margin: 0 14px 6px;
+  padding: 8px 10px;
+  background: rgba(45, 107, 255, 0.08);
+  border: 1px solid rgba(45, 107, 255, 0.2);
+  border-radius: 6px;
+  color: #9fadc2;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.ccomp-insight-block {
+  margin: 8px 14px 0;
+  padding: 0 0 4px 0;
+}
+.ccomp-insight-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-bottom: 6px;
+}
+.ccomp-insight-sep {
+  color: #5a6a7e;
+  font-size: 11px;
+}
+.ccomp-insight-details {
+  font-size: 11px;
+  color: #7a8a9e;
+  line-height: 1.4;
+  margin: 0;
+}
+.ccomp-insight-details summary {
+  cursor: pointer;
+  color: #9fadc2;
+  user-select: none;
+  margin-bottom: 4px;
+}
+.ccomp-insight-details ol {
+  margin: 4px 0 0 0;
+  padding-left: 1.1rem;
+}
+.ccomp-insight-details li {
+  margin-bottom: 4px;
+}
 
 .ccomp-head {
   display: flex;
@@ -2769,6 +2817,46 @@ button.cos-chip:hover {
   background: rgba(255, 77, 94, 0.08);
   border: 1px solid rgba(255, 77, 94, 0.25);
   border-radius: 6px;
+}
+.cos-pmap {
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  background: var(--bg-elevated, #0a0c10);
+  margin-bottom: 10px;
+  padding: 8px 10px 10px;
+}
+.cos-pmap--side {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.cos-pmap--screen {
+  font-size: 12px;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  max-width: 720px;
+}
+.cos-pmap-title {
+  font-weight: 600;
+  font-size: 11px;
+  color: #d0d8e6;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.02em;
+}
+.cos-pmap--side .cos-pmap-title {
+  font-size: 10px;
+}
+.cos-pmap-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #9fadc2;
+}
+.cos-pmap-list li {
+  margin-bottom: 3px;
+}
+.cos-pmap-kb {
+  font-family: var(--font-mono);
+  color: #ffc040;
+  font-size: 0.95em;
 }
 .cw-quickstart {
   text-align: left;
