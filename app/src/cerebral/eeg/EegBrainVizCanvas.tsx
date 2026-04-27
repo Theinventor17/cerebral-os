@@ -25,6 +25,59 @@ const C_ALPHA = new THREE.Color(0xfacc15)
 const C_BETA = new THREE.Color(0xfb923c)
 const C_GAMMA = new THREE.Color(0xfef9c7)
 
+const GRADIENT_SKY_VS = /* glsl */ `
+varying vec3 vN;
+void main() {
+  vN = normalize(position);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+const GRADIENT_SKY_FS = /* glsl */ `
+uniform float uTime;
+varying vec3 vN;
+void main() {
+  float t = vN.y * 0.5 + 0.5;
+  vec3 top = vec3(0.12, 0.16, 0.28);
+  vec3 mid = vec3(0.04, 0.09, 0.16);
+  vec3 bot = vec3(0.02, 0.04, 0.09);
+  vec3 g = mix(bot, top, t);
+  float w = 0.35 + 0.65 * (1.0 - abs(vN.x) * 0.5);
+  vec3 te = vec3(0.02, 0.2, 0.22) * (0.4 + 0.6 * sin(uTime * 0.15 + vN.x * 1.2));
+  g = mix(g, g + te, 0.18 * w);
+  float v = 0.04 * (1.0 - smoothstep(0.0, 0.5, t));
+  g += vec3(v, v * 0.5, 0.0);
+  gl_FragColor = vec4(g, 1.0);
+}
+`
+
+function EegVizGradientSky(): ReactNode {
+  const matRef = useRef<THREE.ShaderMaterial | null>(null)
+  const matArgs: [THREE.ShaderMaterialParameters] = useMemo(
+    () => [
+      {
+        depthWrite: false,
+        side: THREE.BackSide,
+        uniforms: { uTime: { value: 0 } },
+        vertexShader: GRADIENT_SKY_VS,
+        fragmentShader: GRADIENT_SKY_FS
+      }
+    ],
+    []
+  )
+  useFrame((s) => {
+    const m = matRef.current
+    if (m?.uniforms?.uTime) {
+      m.uniforms.uTime.value = s.clock.elapsedTime
+    }
+  })
+  return (
+    <mesh renderOrder={-10} frustumCulled={false}>
+      <sphereGeometry args={[20, 48, 48]} />
+      <shaderMaterial ref={matRef} attach="material" args={matArgs} />
+    </mesh>
+  )
+}
+
 function buildShellPoints(count: number, radius: number, xOffset: number) {
   const pos = new Float32Array(count * 3)
   const reg = new Uint8Array(count)
@@ -55,15 +108,19 @@ function HemiSphere({
   frameRef,
   live,
   xOffset,
-  side
+  side,
+  compact
 }: {
   frameRef: RefObject<NormalizedEEGFrame | null>
   live: boolean
   xOffset: number
   side: 'L' | 'R'
+  /** Right rail: fewer points, smaller billboards */
+  compact?: boolean
 }): ReactNode {
-  const count = 280
-  const { pos, reg } = useMemo(() => buildShellPoints(count, 0.88, xOffset), [xOffset])
+  const count = compact ? 220 : 400
+  const { pos, reg } = useMemo(() => buildShellPoints(count, 0.88, xOffset), [count, xOffset])
+  const pointSize = compact ? 0.04 : 0.056
   const col = useRef(new Float32Array(count * 3))
   const colInit = useMemo(() => new Float32Array(count * 3).fill(0.2), [count])
   const geomRef = useRef<THREE.BufferGeometry>(null)
@@ -87,9 +144,10 @@ function HemiSphere({
     const foc = nrm(fr?.metrics?.focus) * 0.35
     const str = nrm(fr?.metrics?.stress) * 0.28
     const rel = nrm(fr?.metrics?.relaxation) * 0.22
-    const liveBoost = live ? 1 : 0.18
+    const liveBoost = live ? 1 : 0.48
     const bandMix = th + al * 0.9 + bta * 0.85 + ga * 0.95
-    const idleWave = 0.08 + 0.07 * Math.sin(t * 0.65 + (side === 'R' ? 1.1 : 0)) * (live ? 0.25 : 1)
+    const idleWave =
+      0.1 + 0.11 * Math.sin(t * 0.55 + (side === 'R' ? 1.1 : 0)) * (live ? 0.22 : 1)
 
     for (let i = 0; i < count; i++) {
       const ri = reg[i]
@@ -117,7 +175,7 @@ function HemiSphere({
       } else {
         tmp.current.copy(C_GAMMA).lerp(new THREE.Color(0xffffff), 0.35 * ga)
       }
-      tmp.current.multiplyScalar(0.22 + 0.78 * w)
+      tmp.current.multiplyScalar(0.28 + 0.72 * w)
       const o = i * 3
       col.current[o] = tmp.current.r
       col.current[o + 1] = tmp.current.g
@@ -139,10 +197,10 @@ function HemiSphere({
         <bufferAttribute attach="attributes-color" count={count} array={colInit} itemSize={3} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.042}
+        size={pointSize}
         vertexColors
         transparent
-        opacity={0.92}
+        opacity={0.97}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         sizeAttenuation
@@ -152,8 +210,9 @@ function HemiSphere({
 }
 
 function BrainMeshes({ frameRef, live }: { frameRef: RefObject<NormalizedEEGFrame | null>; live: boolean }): ReactNode {
-  const matL = useRef<THREE.MeshStandardMaterial>(null)
-  const matR = useRef<THREE.MeshStandardMaterial>(null)
+  const matL = useRef<THREE.MeshPhysicalMaterial>(null)
+  const matR = useRef<THREE.MeshPhysicalMaterial>(null)
+  const root = useRef<THREE.Group>(null)
 
   useFrame((state) => {
     const fr = frameRef.current
@@ -161,37 +220,48 @@ function BrainMeshes({ frameRef, live }: { frameRef: RefObject<NormalizedEEGFram
     const bp = fr?.bandPower
     const sum = nrm(bp?.theta) + nrm(bp?.alpha) + nrm(bp?.betaL) + nrm(bp?.betaH) + nrm(bp?.gamma)
     const met = nrm(fr?.metrics?.focus) + nrm(fr?.metrics?.relaxation) * 0.5
-    const pulse = live ? Math.min(0.45, sum * 0.12 + met * 0.15) : 0.06 + 0.04 * Math.sin(t * 0.5)
+    const idleBreath = 0.12 + 0.1 * Math.sin(t * 0.4) + 0.04 * Math.sin(t * 1.1)
+    const pulse = live
+      ? Math.min(0.55, sum * 0.14 + met * 0.18)
+      : idleBreath * 0.45
+    if (root.current) {
+      const b = 1.02 + 0.04 * Math.sin(t * 0.38) + (live ? 0.02 * pulse : 0.015)
+      root.current.scale.setScalar(b)
+    }
     if (matL.current) {
-      matL.current.emissiveIntensity = 0.08 + pulse * 0.9
+      matL.current.emissiveIntensity = 0.18 + pulse * 1.05
     }
     if (matR.current) {
-      matR.current.emissiveIntensity = 0.08 + pulse * 0.85
+      matR.current.emissiveIntensity = 0.16 + pulse * 1.0
     }
   })
 
   return (
-    <group rotation={[0.18, 0, 0]} scale={1.05}>
+    <group ref={root} rotation={[0.18, 0, 0]}>
       <mesh position={[-0.38, 0, 0]}>
-        <sphereGeometry args={[0.92, 48, 36]} />
-        <meshStandardMaterial
+        <sphereGeometry args={[0.92, 56, 44]} />
+        <meshPhysicalMaterial
           ref={matL}
-          color="#3a3528"
-          roughness={0.88}
-          metalness={0.12}
-          emissive="#1e2215"
-          emissiveIntensity={0.1}
+          color="#3d4f66"
+          roughness={0.52}
+          metalness={0.22}
+          emissive="#0a4a5c"
+          emissiveIntensity={0.2}
+          clearcoat={0.4}
+          clearcoatRoughness={0.5}
         />
       </mesh>
       <mesh position={[0.38, 0, 0]}>
-        <sphereGeometry args={[0.92, 48, 36]} />
-        <meshStandardMaterial
+        <sphereGeometry args={[0.92, 56, 44]} />
+        <meshPhysicalMaterial
           ref={matR}
-          color="#3a3528"
-          roughness={0.88}
-          metalness={0.12}
-          emissive="#1e2215"
-          emissiveIntensity={0.1}
+          color="#4b3c58"
+          roughness={0.52}
+          metalness={0.22}
+          emissive="#2a0a2c"
+          emissiveIntensity={0.2}
+          clearcoat={0.4}
+          clearcoatRoughness={0.5}
         />
       </mesh>
     </group>
@@ -209,7 +279,7 @@ function OrbitCtl({ live }: { live: boolean }): ReactNode {
     c.enableDamping = true
     c.dampingFactor = 0.08
     c.autoRotate = !live
-    c.autoRotateSpeed = 0.35
+    c.autoRotateSpeed = live ? 0.35 : 0.62
     ctrl.current = c
     return () => {
       c.dispose()
@@ -220,6 +290,7 @@ function OrbitCtl({ live }: { live: boolean }): ReactNode {
     const c = ctrl.current
     if (c) {
       c.autoRotate = !live
+      c.autoRotateSpeed = live ? 0.35 : 0.62
     }
   }, [live])
   useFrame(() => {
@@ -230,21 +301,27 @@ function OrbitCtl({ live }: { live: boolean }): ReactNode {
 
 function Scene({
   frameRef,
-  live
+  live,
+  compact
 }: {
   frameRef: RefObject<NormalizedEEGFrame | null>
   live: boolean
+  compact?: boolean
 }): ReactNode {
   return (
     <>
-      <color attach="background" args={['#1a1d22']} />
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[2.5, 3, 2]} intensity={0.75} color="#e8f0ff" />
-      <directionalLight position={[-2, 1.5, -1]} intensity={0.25} color="#b8c4d8" />
-      <pointLight position={[0, -1.5, 2]} intensity={0.15} color="#7dd3a0" />
+      <color attach="background" args={['#080c12']} />
+      <fog attach="fog" args={['#080c12', 12, 26]} />
+      <EegVizGradientSky />
+      <hemisphereLight intensity={0.55} color="#a8c0e8" groundColor="#080a0c" />
+      <ambientLight intensity={0.38} />
+      <directionalLight position={[2.8, 3.4, 2.2]} intensity={1.05} color="#f0f6ff" />
+      <directionalLight position={[-2.2, 1.4, -1.2]} intensity={0.38} color="#c4b8e8" />
+      <pointLight position={[0, -1.2, 2.4]} intensity={0.35} color="#5ee8c8" distance={8} decay={2} />
+      <pointLight position={[-1.6, 1.2, 0.8]} intensity={0.22} color="#88a8ff" distance={7} decay={2} />
       <BrainMeshes frameRef={frameRef} live={live} />
-      <HemiSphere frameRef={frameRef} live={live} xOffset={-0.38} side="L" />
-      <HemiSphere frameRef={frameRef} live={live} xOffset={0.38} side="R" />
+      <HemiSphere frameRef={frameRef} live={live} xOffset={-0.38} side="L" compact={compact} />
+      <HemiSphere frameRef={frameRef} live={live} xOffset={0.38} side="R" compact={compact} />
       <OrbitCtl live={live} />
     </>
   )
@@ -263,17 +340,18 @@ export function EegBrainVizCanvas({
     signalLock == null ? null : Math.min(100, Math.round(signalLock <= 1 ? signalLock * 100 : signalLock))
   const battNum = /^\d+$/.test(String(battery).trim()) ? parseInt(String(battery).trim(), 10) : null
 
-  const h = compact ? 200 : 320
+  const h = compact ? 200 : 360
 
   return (
     <div className={className ?? 'cos-brain-viz'} style={{ position: 'relative', width: '100%', height: h, borderRadius: 8, overflow: 'hidden' }}>
       <Suspense fallback={<div className="cos-brain-viz-fallback">Loading 3D…</div>}>
         <Canvas
-          camera={{ position: [0, 0.35, 2.75], fov: 42 }}
+          camera={{ position: [0, 0.32, 2.65], fov: 44 }}
           gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+          dpr={[1, 2]}
           style={{ width: '100%', height: '100%', display: 'block' }}
         >
-          <Scene frameRef={eegVizFrameRef} live={insightLive} />
+          <Scene frameRef={eegVizFrameRef} live={insightLive} compact={compact} />
         </Canvas>
       </Suspense>
       <div className="cos-brain-viz-hud" aria-hidden>

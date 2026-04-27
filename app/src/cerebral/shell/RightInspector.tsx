@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { RAAvatar } from '@/components/RAIcons'
-import { EegBrainVizCanvas } from '@/cerebral/eeg/EegBrainVizCanvas'
+import { InsightBrainVisualizerLive } from '@/cerebral/headsets'
 import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import { useCerebralLayout } from '../context/CerebralTabContext'
 import type { AgentMemoryEntry } from '@/types'
@@ -126,7 +126,7 @@ function ContextPane(): ReactNode {
       : '—'
   return (
     <div>
-      <EegBrainVizCanvas compact className="cos-brain-viz--compact" />
+      <InsightBrainVisualizerLive compact className="cos-brain-viz--compact" />
       <h4>Session</h4>
       <pre style={{ fontSize: 10 }}>{sessionId ?? '—'}</pre>
       <h4>Mode</h4>

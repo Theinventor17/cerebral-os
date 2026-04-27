@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { EegBrainVizCanvas } from '@/cerebral/eeg/EegBrainVizCanvas'
+import { InsightBrainVisualizerLive } from '@/cerebral/headsets'
 import { HeadsetRegistry, parseCortexStreamData, type NormalizedEEGFrame, EMOTIV_INSIGHT_PROFILE } from '@/cerebral/headsets'
 import { emotivCortex } from '@/services/EmotivCortexService'
 import { AgentRuntimeService } from '@/services/AgentRuntimeService'
@@ -204,14 +204,15 @@ export function EmotivInsightSettingsScreen() {
       <p style={{ color: 'var(--text-muted, #6f8097)', fontSize: 12, marginTop: 0 }}>
         {profile?.name} · {profile?.channels} channels · {HeadsetRegistry.list().map((h) => h.id).join(', ')}
       </p>
-      <EegBrainVizCanvas />
+      <InsightBrainVisualizerLive />
       <p style={{ fontSize: 11, color: 'var(--text-muted, #6f8097)', marginTop: 6, lineHeight: 1.45 }}>
-        3D view is a Cerebral in-app live map (not EMOTIV <em>BrainViz</em>—see the commercial tool at{' '}
+        2.5D map shows live band power, contact, and raw per channel when Cortex streams are active (not EMOTIV{' '}
+        <em>BrainViz</em>—see{' '}
         <a href="https://www.emotiv.com/emotiv-brainviz" target="_blank" rel="noreferrer" style={{ color: 'var(--cyan)' }}>
           emotiv.com/emotiv-brainviz
         </a>
-        ). Subscribe to <code>pow</code>, <code>eeg</code>, and <code>met</code> in streams for
-        the richest glow. Raw channels still drive parietal sparkles when power bands are absent.
+        ). Subscribe to <code>pow</code>, <code>eeg</code>, <code>met</code>, and <code>dev</code> for contact. Idle
+        preview is labeled; no fabricated values.
       </p>
       <p style={{ fontSize: 12 }}>
         Subscribes only to streams your license provides. Empty fields are not fabricated. Save before testing.

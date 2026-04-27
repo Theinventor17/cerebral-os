@@ -7,3 +7,5 @@ export {
   parseCortexStreamData
 } from './EmotivInsightAdapter'
 export { HeadsetRegistry } from './HeadsetRegistry'
+export { InsightBrainVisualizer, InsightBrainVisualizerLive } from './visualizers/InsightBrainVisualizer'
+export type { InsightBrainVisualizerProps } from './visualizers/brainSignalMapping'

@@ -262,18 +262,20 @@ export function WorkspaceBrowserPanel({ tab }: { tab: CerebralTab }): ReactNode 
         </div>
       )}
       <div
+        key={activeSrc}
         className="ccomp-exec-frame"
         style={{ flex: 1, minHeight: 220, position: 'relative', overflow: 'hidden' }}
       >
         <webview
           ref={(el: HTMLElement | null) => {
             wvRef.current = el
+            if (el) {
+              el.setAttribute('webpreferences', 'contextIsolation=true,nodeIntegration=false,sandbox=true')
+            }
           }}
           className="ccomp-wv"
-          key={activeSrc}
           src={activeSrc}
           allowpopups="true"
-          webpreferences="contextIsolation=true,nodeIntegration=false,sandbox=true"
         />
       </div>
     </div>

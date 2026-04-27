@@ -615,7 +615,8 @@ button.cos-chip:hover {
 /* Live EEG 3D (Headsets + Context) — additive glow over dual-hemisphere mesh */
 .cos-brain-viz {
   border: 1px solid var(--border-soft, #1a1a1a);
-  background: #14181d;
+  background: linear-gradient(165deg, #0b1018 0%, #0e141c 45%, #080c12 100%);
+  box-shadow: inset 0 0 0 1px rgba(100, 160, 255, 0.08), 0 12px 32px rgba(0, 0, 0, 0.45);
   margin: 0 0 8px;
 }
 .cos-brain-viz--compact {
