@@ -45,6 +45,10 @@ npm run dev
 - The **Electron window** opens automatically. This is a **desktop app**, not a generic browser session: folder pickers, terminal, and workspace APIs need the Electron shell.
 - If port `5173` is busy, the Vite dev server may use another port (e.g. `5174`); the main process loads the correct URL.
 
+**IDE deep links (hash router):** open the IDE with query flags on the hash URL, e.g. `#/cerebral/ide?providers=1` or `#/cerebral/ide?keys=1` (both focus **Providers** / model + API keys), `#/cerebral/ide?headsets=1` (focus **Headsets** and open the tab). You can combine targets that map to the same activity, e.g. `#/cerebral/ide?keys=1&providers=1`.
+
+**Keyboard shortcuts:** top **Settings** activity (left bar) → **Keyboard shortcuts** for an in-app table (composer, terminal, session mode). Many **Ctrl+** shortcuts are also listed on the **File / Edit / View** menus; on macOS, **⌘** often applies where the UI shows **Ctrl+**. See the same section in this README under [Keyboard shortcuts](#keyboard-shortcuts).
+
 ### Linux (development)
 
 Run from a normal user session (not a minimal container without a display). Install compiler toolchain and headers so native modules compile on `npm install`:
@@ -104,6 +108,22 @@ Cerebral OS **never** gives you “its own” inference key. For paid or hosted 
 | **Ollama** | `http://localhost:11434/v1/chat/completions` | None (run [Ollama](https://ollama.com/) and pull a model). |
 | **LM Studio** | `http://localhost:1234/v1/chat/completions` | None (start local server in LM Studio). |
 | **llama.cpp server** | Often `http://localhost:8080/v1/chat/completions` | None (OpenAI-compatible server). |
+
+---
+
+## Keyboard shortcuts
+
+| Where | Shortcut | Action |
+|-------|----------|--------|
+| **Composer** | **Enter** | Send message (**Shift+Enter** = new line in the message). |
+| **Composer** | **1**–**5** | When EMOTIV Insight is live (Thought / Hybrid), pick a neural candidate. |
+| **Title bar** | Click **Mode** | Cycle **Manual** → **Hybrid** → **Thought**; use **?** next to **Mode** for popover help. |
+| **Terminal** | **Enter** | Run the current line. |
+| **Terminal** | **Ctrl+C** | Cancel the running process (when applicable). |
+| **Terminal** | **Ctrl+L** | Clear the buffer. |
+| **Terminal** | **↑** / **↓** | Command history. |
+
+Menus in the app also show **Ctrl+** labels (e.g. **Ctrl+Shift+P**, **Ctrl+O**); not every entry is fully implemented. **Settings → Keyboard shortcuts** in the IDE mirrors this table with a bit more context.
 
 ---
 

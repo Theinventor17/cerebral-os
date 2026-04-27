@@ -15,6 +15,7 @@ import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import type { CerebralTab } from '../types/cerebral.ts'
 import { CerebralSkillMarketplace } from './CerebralSkillMarketplace'
 import { CommandEncyclopediaScreen } from '@/cerebral/commands/CommandEncyclopediaScreen'
+import { KeyboardShortcutsScreen } from '@/screens/KeyboardShortcutsScreen'
 import { WorkspaceBrowserPanel } from './WorkspaceBrowserPanel'
 import { getCatalogSkill } from '../skill/claudeCatalog'
 import { fetchSkillMarkdown } from '../skill/skillMarkdownFetch'
@@ -122,6 +123,13 @@ export function EditorTabBody({ tab }: { tab: CerebralTab }): ReactNode {
         return (
           <div className="cos-embed">
             <CommandEncyclopediaScreen />
+          </div>
+        )
+      }
+      if (view === 'keyboard-shortcuts') {
+        return (
+          <div className="cos-embed">
+            <KeyboardShortcutsScreen />
           </div>
         )
       }

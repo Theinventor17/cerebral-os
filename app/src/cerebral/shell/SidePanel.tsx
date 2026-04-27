@@ -224,6 +224,13 @@ export function SidePanel(): ReactNode {
           <button
             type="button"
             className="cos-item"
+            onClick={() => openTab({ id: crypto.randomUUID(), title: 'Keyboard shortcuts', type: 'settings', data: { view: 'keyboard-shortcuts' } })}
+          >
+            Keyboard shortcuts
+          </button>
+          <button
+            type="button"
+            className="cos-item"
             onClick={() => openTab({ id: crypto.randomUUID(), title: 'API keys', type: 'settings', data: { view: 'api-keys' } })}
           >
             API keys

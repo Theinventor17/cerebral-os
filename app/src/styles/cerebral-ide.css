@@ -100,6 +100,70 @@
   box-shadow: 0 0 0 1px rgba(45, 107, 255, 0.4);
   color: #cfe8ff;
 }
+.cide-mode-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.cide-mode-help {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  line-height: 1;
+  font-size: 10px;
+  font-weight: 700;
+  color: #7a8a9e;
+  background: #0a1018;
+  border: 1px solid #1a3555;
+  border-radius: 3px;
+  cursor: help;
+  flex: none;
+  -webkit-app-region: no-drag;
+}
+.cide-mode-help:hover,
+.cide-mode-help[aria-expanded='true'] {
+  color: #cfe8ff;
+  border-color: rgba(45, 107, 255, 0.55);
+  background: rgba(45, 107, 255, 0.12);
+}
+.cide-mode-popover {
+  position: absolute;
+  z-index: 2000;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 280px;
+  max-width: min(400px, 90vw);
+  padding: 10px 12px 10px;
+  background: #060b12;
+  border: 1px solid var(--cide-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  text-align: left;
+}
+.cide-mode-poprow {
+  margin-bottom: 8px;
+}
+.cide-mode-ptitle {
+  font-weight: 600;
+  color: #c4d0e0;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.cide-mode-pbody {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--cide-mute);
+}
+.cide-mode-pfoot {
+  margin: 4px 0 0 0;
+  font-size: 9px;
+  line-height: 1.4;
+  color: #5a6a7e;
+  border-top: 1px solid #142236;
+  padding-top: 8px;
+}
 
 .cide-mid {
   display: flex;
