@@ -2,7 +2,7 @@
 
 **Cerebral OS** is a standalone desktop app for **thought-assisted AI agent orchestration**: a local-first IDE-style workspace with agent chat, composer workflows, integrated terminal, workspace file tools, optional skill marketplace integration, and optional **EMOTIV / Cortex** headset support for neural input.
 
-- **License:** [MIT](LICENSE)
+- **License:** [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0)
 - **Stack:** [Electron](https://www.electronjs.org/) · [Vite](https://vitejs.dev/) · React · TypeScript · SQLite (`better-sqlite3`) · secure credential storage
 
 Cerebral OS does **not** ship a cloud backend for chat. You connect **your** models: local (Ollama, LM Studio, llama.cpp, etc.) or **your API keys** for cloud providers.

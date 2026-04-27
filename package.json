@@ -4,7 +4,7 @@
   "description": "Cerebral OS — thought-assisted AI agent orchestration (standalone)",
   "main": "out/main/main.js",
   "author": "",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "scripts": {
     "postinstall": "node scripts/relax-node-pty-spectre.cjs && electron-rebuild -f -w better-sqlite3 -w node-pty",
     "rebuild:sqlite": "electron-rebuild -f -w better-sqlite3",
