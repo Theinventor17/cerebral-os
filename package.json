@@ -1,0 +1,64 @@
+{
+  "name": "cerebral-os",
+  "version": "0.1.0",
+  "description": "Cerebral OS — thought-assisted AI agent orchestration (standalone)",
+  "main": "out/main/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node scripts/relax-node-pty-spectre.cjs && electron-rebuild -f -w better-sqlite3 -w node-pty",
+    "rebuild:sqlite": "electron-rebuild -f -w better-sqlite3",
+    "rebuild:pty": "electron-rebuild -f -w node-pty",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build && electron-builder",
+    "build:app": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "refresh:skills": "node scripts/generate-claude-skills-catalog.mjs"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^8.15.19",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "better-sqlite3": "^9.4.0",
+    "node-pty": "^1.0.0",
+    "react-resizable-panels": "^4.10.0",
+    "react-rnd": "^10.5.3",
+    "three": "^0.184.0",
+    "uuid": "^9.0.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/three": "^0.184.0",
+    "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.0",
+    "electron-vite": "^2.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.cerebral.os",
+    "productName": "CEREBRAL OS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ]
+  }
+}
