@@ -445,6 +445,25 @@ button.cos-chip:hover {
   border-color: rgba(255, 255, 255, 0.5);
   color: var(--text-primary);
 }
+.cos-chip-insight {
+  font-family: var(--font);
+  color: var(--text-muted);
+}
+.cos-chip-insight--live {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(16, 185, 129, 0.1);
+  color: #a7f3d0;
+}
+.cos-chip-insight--live b {
+  color: #6ee7b7;
+}
+.cos-chip-insight--off b {
+  color: #9ca3af;
+}
+.cos-chip-insight-mark {
+  font-size: 10px;
+  opacity: 0.85;
+}
 .cos-grad-on {
   border: none;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));

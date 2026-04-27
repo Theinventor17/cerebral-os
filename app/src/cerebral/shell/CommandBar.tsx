@@ -67,7 +67,8 @@ function LayoutToggles(): ReactNode {
 
 export function CommandBar(): ReactNode {
   const nav = useNavigate()
-  const { sessionMode, setSessionMode, localOnly, activeAgent, headsetLive, cortex, signalLock, eegLine } = useResonantAgents()
+  const { sessionMode, setSessionMode, localOnly, activeAgent, headsetLive, cortex, signalLock, eegLine, insightLive } =
+    useResonantAgents()
   const [provName, setProvName] = useState('—')
   const [paletteOpen, setPaletteOpen] = useState(false)
 
@@ -107,6 +108,10 @@ export function CommandBar(): ReactNode {
 
   const openPalette = useCallback(() => setPaletteOpen(true), [])
   const closePalette = useCallback(() => setPaletteOpen(false), [])
+
+  const openHeadsetsDeepLink = useCallback(() => {
+    void nav('/cerebral/ide?headsets=1', { replace: true })
+  }, [nav])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -151,6 +156,18 @@ export function CommandBar(): ReactNode {
         <button type="button" className="cos-chip cos-grad-on" onClick={cycleMode} title="Cycle Manual / Hybrid / Thought">
           <span>Mode: </span>
           <b>{modeLabel}</b>
+        </button>
+        <button
+          type="button"
+          className={insightLive ? 'cos-chip cos-chip-insight cos-chip-insight--live' : 'cos-chip cos-chip-insight cos-chip-insight--off'}
+          onClick={openHeadsetsDeepLink}
+          title="EMOTIV Insight (Cortex stream). Click to open Headsets (◎) — same as the activity bar and ?headsets=1 link."
+        >
+          Insight: <b>{insightLive ? 'live' : 'off'}</b>
+          <span className="cos-chip-insight-mark" aria-hidden>
+            {' '}
+            ◎
+          </span>
         </button>
         <span className="cos-chip" title="Active agent provider">
           Provider: <b>{provName}</b>
