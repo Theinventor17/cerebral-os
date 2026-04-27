@@ -463,7 +463,7 @@ export function AgentChatWorkspace(): ReactNode {
           )}
           {thoughtBlocked && (
             <p className="ccomp-err">
-              Thought mode needs a live EMOTIV Insight signal (Settings → Headsets). Use Manual or Hybrid without hardware.
+              Thought mode needs a live EMOTIV Insight signal (Headsets activity ◎ in the left bar). Use Manual or Hybrid without hardware.
             </p>
           )}
           {sendError && <p className="ccomp-err">{sendError}</p>}

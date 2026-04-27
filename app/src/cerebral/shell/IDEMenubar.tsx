@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CEREBRAL_HEADSETS_TAB_ID } from '../headsetsTabConstants'
 import { useCerebralLayout } from '../context/CerebralTabContext'
 import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import { emotivCortex } from '@/services/EmotivCortexService'
@@ -129,8 +130,8 @@ export function IDEMenubar(): ReactNode {
   }, [])
 
   const openHeadsetsTab = useCallback(() => {
-    setActivity('settings')
-    openTab({ id: crypto.randomUUID(), title: 'Headsets', type: 'settings', data: { view: 'headsets' } })
+    setActivity('headsets')
+    openTab({ id: CEREBRAL_HEADSETS_TAB_ID, title: 'Headsets', type: 'headsets', data: {} })
   }, [openTab, setActivity])
 
   const onOpenProjectFolder = useCallback(async () => {

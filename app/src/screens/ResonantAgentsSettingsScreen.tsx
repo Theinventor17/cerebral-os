@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
+import { CEREBRAL_HEADSETS_TAB_ID } from '../cerebral/headsetsTabConstants'
 import { useCerebralLayout } from '../cerebral/context/CerebralTabContext'
 import { useResonantAgents } from '../providers/ResonantAgentsProvider'
 import { AgentProviderService } from '../services/AgentProviderService'
 import type { ModelProviderConfig } from '../types'
 
 export function ResonantAgentsSettingsScreen() {
-  const { openTab } = useCerebralLayout()
+  const { openTab, setActivity } = useCerebralLayout()
   const { localOnly, setLocalOnly, autoListen, setAutoListen, demoMode, setDemoMode } = useResonantAgents()
   const [providers, setProviders] = useState<ModelProviderConfig[]>([])
   const [guideId, setGuideId] = useState<string | null>(null)
@@ -67,11 +68,12 @@ export function ResonantAgentsSettingsScreen() {
         <button
           type="button"
           className="cos-chip"
-          onClick={() =>
-            openTab({ id: crypto.randomUUID(), title: 'Headsets', type: 'settings', data: { view: 'headsets' } })
-          }
+          onClick={() => {
+            setActivity('headsets')
+            openTab({ id: CEREBRAL_HEADSETS_TAB_ID, title: 'Headsets', type: 'headsets', data: {} })
+          }}
         >
-          Headsets → EMOTIV Insight
+          Open Headsets (EMOTIV Insight)
         </button>
       </p>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>

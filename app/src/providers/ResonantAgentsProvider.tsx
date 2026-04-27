@@ -449,7 +449,7 @@ export function ResonantAgentsProvider({ children }: { children: ReactNode }): R
               setBattery('—')
             }
             if (lastFrameAtRef.current === 0) {
-              setEegLine('Cortex ok — no stream data yet (run Test Insight in Headsets settings)')
+              setEegLine('Cortex ok — no stream data yet (open Headsets tab and run Test Insight)')
             }
           } else {
             setHeadsetName(s.emotivHeadsetId || '—')
@@ -617,7 +617,7 @@ export function ResonantAgentsProvider({ children }: { children: ReactNode }): R
         return
       }
       if (sessionMode === 'thought' && !insightLive) {
-        setSendError('Thought mode needs a live EMOTIV Insight signal. Switch to Manual or Hybrid, or connect Insight in settings.')
+        setSendError('Thought mode needs a live EMOTIV Insight signal. Switch to Manual or Hybrid, or connect Insight in Headsets (◎ activity).')
         return
       }
       if (sessionMode === 'hybrid' && !insightLive) {

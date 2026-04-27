@@ -63,6 +63,12 @@ export function EditorTabBody({ tab }: { tab: CerebralTab }): ReactNode {
     case 'logs': {
       return <LogsView />
     }
+    case 'headsets':
+      return (
+        <div className="cos-embed">
+          <EmotivInsightSettingsScreen />
+        </div>
+      )
     case 'report':
       return (
         <div className="cos-embed">

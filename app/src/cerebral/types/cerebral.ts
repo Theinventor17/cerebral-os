@@ -5,6 +5,7 @@ export type CerebralActivityId =
   | 'skills'
   | 'providers'
   | 'memory'
+  | 'headsets'
   | 'logs'
   | 'settings'
 
@@ -17,6 +18,7 @@ export type CerebralTabType =
   | 'report'
   | 'memory'
   | 'logs'
+  | 'headsets'
   | 'settings'
 
 export type CerebralTab = {

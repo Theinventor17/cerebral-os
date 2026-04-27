@@ -16,6 +16,7 @@ import {
 } from '../skill/workflowSkillImports'
 import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import { RAAvatar } from '@/components/RAIcons'
+import { CEREBRAL_HEADSETS_TAB_ID } from '../headsetsTabConstants'
 import { useCerebralLayout } from '../context/CerebralTabContext'
 import type { CerebralActivityId } from '../types/cerebral.ts'
 import { ConversationListRow } from '@/components/ConversationListRow'
@@ -38,6 +39,7 @@ const titles: Record<CerebralActivityId, string> = {
   skills: 'Skills',
   providers: 'Providers',
   memory: 'Memory',
+  headsets: 'Headsets',
   logs: 'Logs',
   settings: 'Settings'
 }
@@ -184,6 +186,27 @@ export function SidePanel(): ReactNode {
     )
   }
 
+  if (activity === 'headsets') {
+    return (
+      <aside className="cos-side" aria-label="Headsets">
+        <div className="cos-sh">Headsets</div>
+        <div className="cos-sbody">
+          <p style={{ color: 'var(--text-muted)', fontSize: 12, lineHeight: 1.5, margin: '0 0 8px 0' }}>
+            EMOTIV Insight and Cortex: connect, subscribe to streams, calibrate, and test the live brain map in the
+            center editor.
+          </p>
+          <button
+            type="button"
+            className="cos-item"
+            onClick={() => openTab({ id: CEREBRAL_HEADSETS_TAB_ID, title: 'Headsets', type: 'headsets', data: {} })}
+          >
+            Open Headsets tab
+          </button>
+        </div>
+      </aside>
+    )
+  }
+
   if (activity === 'settings') {
     return (
       <aside className="cos-side" aria-label="Settings">
@@ -211,13 +234,9 @@ export function SidePanel(): ReactNode {
           >
             Command encyclopedia
           </button>
-          <button
-            type="button"
-            className="cos-item"
-            onClick={() => openTab({ id: crypto.randomUUID(), title: 'Headsets', type: 'settings', data: { view: 'headsets' } })}
-          >
-            Headsets (EMOTIV Insight)
-          </button>
+          <p style={{ color: 'var(--text-muted)', fontSize: 10, lineHeight: 1.4, margin: '4px 0 6px' }}>
+            Neural hardware: use the <strong>◎ Headsets</strong> activity in the left bar, or the Headsets tab.
+          </p>
           <button
             type="button"
             className="cos-item"
