@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { EditorTabs } from './EditorTabs'
 import { EditorTabBody } from './EditorTabBody'
 import { useCerebralLayout } from '../context/CerebralTabContext'
+import { OnboardingBanner } from './OnboardingBanner'
 
 export function EditorWorkspace(): ReactNode {
   const { tabs, activeTabId } = useCerebralLayout()
@@ -10,6 +11,7 @@ export function EditorWorkspace(): ReactNode {
 
   return (
     <div className="cos-center">
+      <OnboardingBanner />
       <EditorTabs />
       <div className="cos-work">
         {!active && (

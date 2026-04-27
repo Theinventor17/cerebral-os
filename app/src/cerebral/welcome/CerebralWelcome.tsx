@@ -52,6 +52,14 @@ export function CerebralWelcome(): ReactNode {
     nav('/cerebral/ide')
   }, [nav])
 
+  const goIdeProviders = useCallback(() => {
+    nav('/cerebral/ide?providers=1')
+  }, [nav])
+
+  const goIdeHeadsets = useCallback(() => {
+    nav('/cerebral/ide?headsets=1')
+  }, [nav])
+
   const applyRoot = useCallback(
     async (rootPath: string, displayName?: string) => {
       setBusy(true)
@@ -169,6 +177,42 @@ export function CerebralWelcome(): ReactNode {
         </header>
 
         {err && <div className="cw-err">{err}</div>}
+
+        <section className="cw-quickstart" aria-labelledby="cw-quickstart-title">
+          <h2 id="cw-quickstart-title" className="cw-quickstart-h">
+            Quick start
+          </h2>
+          <ol className="cw-quickstart-list">
+            <li>
+              <span className="cw-quickstart-step">1</span>
+              <div>
+                <strong>Workspace folder</strong> — choose a project so the terminal and tools use the right directory.{' '}
+                <button type="button" className="cw-link" disabled={busy} onClick={() => void onOpenProject()}>
+                  Open folder…
+                </button>
+              </div>
+            </li>
+            <li>
+              <span className="cw-quickstart-step">2</span>
+              <div>
+                <strong>One model provider</strong> — add Ollama, OpenRouter, or an API key in Providers.{' '}
+                <button type="button" className="cw-link" disabled={busy} onClick={goIdeProviders}>
+                  Open Providers in IDE
+                </button>
+              </div>
+            </li>
+            <li>
+              <span className="cw-quickstart-step">3</span>
+              <div>
+                <strong>Headsets optional</strong> — chat works without a headset. For neural / EMOTIV control, open{' '}
+                <button type="button" className="cw-link" disabled={busy} onClick={goIdeHeadsets}>
+                  ◎ Headsets
+                </button>{' '}
+                in the IDE.
+              </div>
+            </li>
+          </ol>
+        </section>
 
         <div className="cw-actions">
           <button type="button" className="cw-card" disabled={busy} onClick={() => void onOpenProject()}>
