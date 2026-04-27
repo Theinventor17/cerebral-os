@@ -18,7 +18,11 @@ import {
   EXECUTE_LIVE_BROWSER_DEFAULT_URL
 } from '@/cerebral/workspace/executeBrowserConstants'
 import { toWorkspaceRelPath } from './composer/proseFormat'
-import { COPY_INSIGHT_OFF_HYBRID, COPY_INSIGHT_OFF_THOUGHT } from '@/cerebral/copy/insightModeCopy'
+import {
+  AgentChatInsightHybridStrip,
+  AgentChatInsightThoughtGating,
+  AgentChatSendErrorLine
+} from './AgentChatInsightGating'
 
 const suggestions = ['Decompose tasks', 'Prioritize', 'Review risk', 'Outline next steps']
 
@@ -66,13 +70,13 @@ function formatMsgTime(iso: string): string {
   }
 }
 
+/** Canonical agent chat + composer for the Cerebral IDE. Shared Insight gating: `AgentChatInsightGating`. */
 export function AgentChatWorkspace(): ReactNode {
   const { dispatchOutgoing } = useCommandExecution()
   const {
     activeAgent,
     messages,
     sending,
-    sendError,
     streamHint,
     clearStreamHint,
     runTestStreamingPrompt,
@@ -80,7 +84,6 @@ export function AgentChatWorkspace(): ReactNode {
     cancelActiveGeneration,
     lastWorkspaceWrites,
     sessionMode,
-    setSessionMode,
     endSession,
     startSession,
     sessionId,
@@ -396,11 +399,7 @@ export function AgentChatWorkspace(): ReactNode {
       />
 
       <div className="ccomp-main">
-        {sessionMode === 'hybrid' && !insightLive && (
-          <p className="ccomp-hint ccomp-hint--insight" role="status">
-            {COPY_INSIGHT_OFF_HYBRID}
-          </p>
-        )}
+        <AgentChatInsightHybridStrip variant="ide" />
         {(sessionMode === 'thought' || sessionMode === 'hybrid') && insightLive && (
           <div style={{ padding: '0 12px 8px' }}>
             <NeuralAlphabetPanel />
@@ -468,34 +467,8 @@ export function AgentChatWorkspace(): ReactNode {
                 : 'Plan, ask, or run commands. Works in Manual or Hybrid without a headset.'}
             </p>
           )}
-          {thoughtBlocked && (
-            <div className="ccomp-insight-block" role="alert">
-              <p className="ccomp-err ccomp-err--one">{COPY_INSIGHT_OFF_THOUGHT}</p>
-              <div className="ccomp-insight-actions">
-                <button type="button" className="ccomp-linkish" onClick={() => void setSessionMode('hybrid')}>
-                  Switch to Hybrid
-                </button>
-                <span className="ccomp-insight-sep" aria-hidden>
-                  ·
-                </span>
-                <button type="button" className="ccomp-linkish" onClick={() => void setSessionMode('manual')}>
-                  Switch to Manual
-                </button>
-              </div>
-              <details className="ccomp-insight-details">
-                <summary>Checklist</summary>
-                <ol>
-                  <li>
-                    Top bar: cycle <strong>Mode</strong> to Manual or Hybrid to type without a live Insight stream.
-                  </li>
-                  <li>
-                    Left bar: <strong>◎ Headsets</strong> → connect EMOTIV and start a live stream to use Thought mode.
-                  </li>
-                </ol>
-              </details>
-            </div>
-          )}
-          {sendError && <p className="ccomp-err">{sendError}</p>}
+          <AgentChatInsightThoughtGating variant="ide" />
+          <AgentChatSendErrorLine variant="ide" />
           {streamHint && (
             <p className="ccomp-hint" role="status">
               {streamHint}
