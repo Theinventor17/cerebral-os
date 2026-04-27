@@ -92,7 +92,7 @@ function runEdit(cmd: 'copy' | 'cut' | 'paste' | 'undo' | 'redo' | 'selectAll'):
   }
 }
 
-export function IDEMenubar(): ReactNode {
+export function IDEMenubar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }): ReactNode {
   const nav = useNavigate()
   const { openTab, openBrowserTab, setActivity, setBottomTab, closeTab, activeTabId, workspaceRoot, tabs, setActiveTabId } = useCerebralLayout()
   const { refresh, headset, cortex, eegLine } = useResonantAgents()
@@ -123,11 +123,6 @@ export function IDEMenubar(): ReactNode {
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
-
-  const focusCommandPalette = useCallback(() => {
-    const el = document.getElementById('cide-cmd-palette-search') as HTMLInputElement | null
-    el?.focus()
-  }, [])
 
   const openHeadsetsTab = useCallback(() => {
     setActivity('headsets')
@@ -317,7 +312,7 @@ export function IDEMenubar(): ReactNode {
       { type: 'item', label: 'Paste', shortcut: 'Ctrl+V', onSelect: () => runEdit('paste') }
     ],
     [
-      { type: 'item', label: 'Find', shortcut: 'Ctrl+F', onSelect: () => focusCommandPalette() },
+      { type: 'item', label: 'Find', shortcut: 'Ctrl+F', onSelect: () => onOpenCommandPalette() },
       { type: 'item', label: 'Replace', shortcut: 'Ctrl+H', disabled: true }
     ],
     [
@@ -330,7 +325,7 @@ export function IDEMenubar(): ReactNode {
       { type: 'item', label: 'Emmet: Expand Abbreviation', shortcut: 'Tab', disabled: true }
     ]
   ],
-  [focusCommandPalette, runEdit]
+  [onOpenCommandPalette, runEdit]
   )
 
   const selectionSections: Item[][] = useMemo(
@@ -377,9 +372,9 @@ export function IDEMenubar(): ReactNode {
         type: 'item',
         label: 'Command Palette…',
         shortcut: 'Ctrl+Shift+P',
-        onSelect: () => focusCommandPalette()
+        onSelect: () => onOpenCommandPalette()
       },
-      { type: 'item', label: 'Open View…', onSelect: () => focusCommandPalette() }
+      { type: 'item', label: 'Open View…', onSelect: () => onOpenCommandPalette() }
     ],
     [
       { type: 'item', label: 'Appearance', sub: true, disabled: true },
@@ -448,7 +443,7 @@ export function IDEMenubar(): ReactNode {
     ],
     [{ type: 'item', label: 'Word Wrap', shortcut: 'Alt+Z', disabled: true }]
   ],
-  [focusCommandPalette, setActivity, showBottomPanel, openBrowserTab]
+  [onOpenCommandPalette, setActivity, showBottomPanel, openBrowserTab]
   )
 
   const goSections: Item[][] = useMemo(
@@ -467,7 +462,7 @@ export function IDEMenubar(): ReactNode {
         type: 'item',
         label: 'Go to File…',
         shortcut: 'Ctrl+P',
-        onSelect: () => focusCommandPalette()
+        onSelect: () => onOpenCommandPalette()
       },
       { type: 'item', label: 'Go to Symbol in Workspace…', shortcut: 'Ctrl+T', disabled: true }
     ],
@@ -484,7 +479,7 @@ export function IDEMenubar(): ReactNode {
       { type: 'item', label: 'Previous Problem', shortcut: 'Shift+F8', disabled: true }
     ]
   ],
-  [focusCommandPalette]
+  [onOpenCommandPalette]
   )
 
   const runSections: Item[][] = useMemo(
@@ -584,7 +579,7 @@ export function IDEMenubar(): ReactNode {
 
   const helpSections: Item[][] = [
     [
-      { type: 'item', label: 'Show All Commands', shortcut: 'Ctrl+Shift+P', onSelect: () => focusCommandPalette() },
+      { type: 'item', label: 'Show All Commands', shortcut: 'Ctrl+Shift+P', onSelect: () => onOpenCommandPalette() },
       { type: 'item', label: 'Get Started with Accessibility', disabled: true }
     ],
     [

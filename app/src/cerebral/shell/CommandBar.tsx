@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { IdeCommandPalette } from './IdeCommandPalette'
 import { useNavigate } from 'react-router-dom'
 import { useResonantAgents } from '@/providers/ResonantAgentsProvider'
 import type { SessionMode } from '@/types'
@@ -68,6 +69,7 @@ export function CommandBar(): ReactNode {
   const nav = useNavigate()
   const { sessionMode, setSessionMode, localOnly, activeAgent, headsetLive, cortex, signalLock, eegLine } = useResonantAgents()
   const [provName, setProvName] = useState('—')
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   const cycleMode = useCallback(() => {
     const order: SessionMode[] = ['manual', 'hybrid', 'thought']
@@ -103,8 +105,23 @@ export function CommandBar(): ReactNode {
     void window.cerebral?.window?.maximizeToggle?.()
   }, [])
 
+  const openPalette = useCallback(() => setPaletteOpen(true), [])
+  const closePalette = useCallback(() => setPaletteOpen(false), [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'p' && e.shiftKey && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        setPaletteOpen((o) => !o)
+      }
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [])
+
   return (
     <header className="cos-cmd" role="banner">
+      <IdeCommandPalette open={paletteOpen} onClose={closePalette} />
       <div className="cos-cmd-menus">
         <div
           className="cos-brand"
@@ -113,17 +130,18 @@ export function CommandBar(): ReactNode {
         >
           CEREBRAL OS
         </div>
-        <IDEMenubar />
+        <IDEMenubar onOpenCommandPalette={openPalette} />
       </div>
-      <div className="cos-pal" title="Command palette (type routes future)">
-        <input
-          id="cide-cmd-palette-search"
-          type="search"
-          readOnly
-          tabIndex={-1}
-          placeholder="Ask, route, run, or configure…"
-          aria-label="Command palette"
-        />
+      <div className="cos-pal" title="Command palette — click or Ctrl+Shift+P">
+        <button
+          type="button"
+          className="cos-pal-trigger"
+          onClick={openPalette}
+          aria-expanded={paletteOpen}
+          aria-haspopup="dialog"
+        >
+          Ask, route, run, or configure…
+        </button>
       </div>
       <LayoutToggles />
       <button type="button" className="cos-chip" title="Change project folder" onClick={() => nav('/cerebral/welcome')}>

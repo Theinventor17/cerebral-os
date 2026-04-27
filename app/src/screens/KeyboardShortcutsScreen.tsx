@@ -41,6 +41,32 @@ export function KeyboardShortcutsScreen(): ReactNode {
       </p>
 
       <h2 className="ra-h1" style={{ fontSize: 14, margin: '0 0 8px' }}>
+        Command palette
+      </h2>
+      <table
+        className="ra-mute"
+        style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 20 }}
+      >
+        <tbody>
+          <Row
+            action="Open or close"
+            combo={
+              <>
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>P</Kbd> (use <Kbd>⌘</Kbd> on macOS)
+              </>
+            }
+          />
+          <Row
+            action="Or click"
+            combo={<>The center &quot;Ask, route, run, or configure…&quot; strip in the top bar</>}
+          />
+        </tbody>
+      </table>
+      <p className="ra-mute" style={{ fontSize: 12, lineHeight: 1.45, margin: '-8px 0 20px' }}>
+        From the palette: jump to an activity, set <strong>Manual / Hybrid / Thought</strong>, open General settings, keyboard help, a browser tab, the Welcome (project) flow, or an agent chat. Type to filter; ↑ ↓ and Enter to run.
+      </p>
+
+      <h2 className="ra-h1" style={{ fontSize: 14, margin: '0 0 8px' }}>
         Composer (agent chat)
       </h2>
       <table

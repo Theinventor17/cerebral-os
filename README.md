@@ -47,7 +47,9 @@ npm run dev
 
 **IDE deep links (hash router):** open the IDE with query flags on the hash URL, e.g. `#/cerebral/ide?providers=1` or `#/cerebral/ide?keys=1` (both focus **Providers** / model + API keys), `#/cerebral/ide?headsets=1` (focus **Headsets** and open the tab). You can combine targets that map to the same activity, e.g. `#/cerebral/ide?keys=1&providers=1`.
 
-**Keyboard shortcuts:** top **Settings** activity (left bar) → **Keyboard shortcuts** for an in-app table (composer, terminal, session mode). Many **Ctrl+** shortcuts are also listed on the **File / Edit / View** menus; on macOS, **⌘** often applies where the UI shows **Ctrl+**. See the same section in this README under [Keyboard shortcuts](#keyboard-shortcuts).
+**Command palette:** click the **center search strip** in the top bar, or **Ctrl+Shift+P** (⌘+Shift+P on macOS) to open it — go to an activity, set session mode, open settings tabs, an agent chat, the browser, or **Welcome** (open project). The same shortcut toggles the palette closed.
+
+**Keyboard shortcuts:** top **Settings** activity (left bar) → **Keyboard shortcuts** for an in-app table (composer, terminal, session mode, palette). Many **Ctrl+** shortcuts are also listed on the **File / Edit / View** menus; on macOS, **⌘** often applies where the UI shows **Ctrl+**. See the same section in this README under [Keyboard shortcuts](#keyboard-shortcuts).
 
 ### Linux (development)
 
@@ -115,6 +117,7 @@ Cerebral OS **never** gives you “its own” inference key. For paid or hosted 
 
 | Where | Shortcut | Action |
 |-------|----------|--------|
+| **Command palette** | **Ctrl+Shift+P** (⌘+Shift+P on macOS) | Open or close the palette; also click the center “Ask, route…” strip in the top bar. |
 | **Composer** | **Enter** | Send message (**Shift+Enter** = new line in the message). |
 | **Composer** | **1**–**5** | When EMOTIV Insight is live (Thought / Hybrid), pick a neural candidate. |
 | **Title bar** | Click **Mode** | Cycle **Manual** → **Hybrid** → **Thought**; use **?** next to **Mode** for popover help. |
