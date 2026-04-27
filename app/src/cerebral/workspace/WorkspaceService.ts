@@ -13,6 +13,7 @@ export async function executeApprovedWorkspaceActions(
     activeAgent: ResonantAgent
     onOpenFile: (relativePath: string) => void
     onCommandChunk?: (stream: 'stdout' | 'stderr', data: string) => void
+    onOpenUrlInBrowser?: (url: string) => void
   }
 ): Promise<string> {
   const lines: string[] = []
@@ -21,7 +22,8 @@ export async function executeApprovedWorkspaceActions(
       ctx.onOpenFile(action.path.replace(/\\/g, '/'))
     }
     const { lines: L } = await executeWorkspaceAction(action, {
-      onCommandChunk: ctx.onCommandChunk
+      onCommandChunk: ctx.onCommandChunk,
+      onOpenUrlInBrowser: ctx.onOpenUrlInBrowser
     })
     lines.push(...L)
   }

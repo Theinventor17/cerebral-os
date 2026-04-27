@@ -172,7 +172,7 @@ function prepareResonantAgentChat(
       : a.workflowMode === 'imagine'
         ? '\n\n[Composer workflow: Imagine — create & mix]\nBalance creative work with execution when asked. When you have image URLs, embed them in markdown as ![description](https://...) so the chat can show them inline. Good for docs, copy, outlines, and multi-step creative work.'
         : a.workflowMode === 'execute'
-          ? '\n\n[Composer workflow: Execute — actions]\nPrioritize concrete steps, checklists, command sequences, and doing the work. Minimize preamble; focus on outcomes. Mention public https URLs the user can open; the app may show a live browser panel in this mode (automation hooks may follow in a later build).'
+          ? "\n\n[Composer workflow: Execute — actions]\nYou are NOT a model with 'no internet' here: Cerebral OS can open public https URLs in the **in-app Live browser** (built-in webview) after the user approves a workspace action.\n\n**Opening a site:** When the user asks to go to, open, or visit a website (e.g. Google), include `{ \"type\": \"run_command\", \"command\": \"start https://www.google.com\" }` in your `<cerebral_actions>` on Windows (`start https://...`); on macOS use `open https://...`, Linux `xdg-open https://...`. After they click **Approve**, the app loads that URL in the Live browser tab. Do **not** refuse with lines like 'I cannot open web pages' or 'I do not have browsing' — you **can** propose this `run_command` and the host will open it in-app.\n\nPrioritize concrete steps, checklists, and one-line shell commands. Minimize empty preamble; focus on outcomes."
           : ''
   const add =
     a.skillAddendum && String(a.skillAddendum).trim() ? String(a.skillAddendum).slice(0, 12000) : ''
@@ -195,11 +195,19 @@ The app applies changes to the user's real workspace folder only after the user 
 - **Actions:** \`read_file\`, \`write_file\`, \`edit_file\` (path, find, replace), \`delete_file\`, \`create_directory\`, \`open_file\`, \`run_command\` (one line; on Windows you may use \`cmd /c\` to chain). The user must approve the list in the app before any file or command runs.
 - Every file you put in the markdown must appear again inside "content" in write_file. Escape quotes and newlines as JSON requires.
 - "path" is relative to the workspace; use a subfolder (e.g. my-site/...) to group the project. Optional: add { "type": "run_command", "command": "npx serve ." } to preview (one line; use && to chain on Windows: cmd /c for cmd.exe).
-- If the user only wanted an explanation, omit <cerebral_actions>. If they wanted a buildable app/site, omitting it is wrong — they should not be told to "create a folder and paste" instead. (The app may still auto-save from multiple labeled or sniffable code fences, but you must not substitute that for explicit actions in Vibe when delivering a project.)`
+- If the user only wanted an explanation, omit <cerebral_actions>. If they wanted a buildable app/site, omitting it is wrong — they should not be told to "create a folder and paste" instead. (The app may still auto-save from multiple labeled or sniffable code fences, but you must not substitute that for explicit actions in Vibe when delivering a project.)${
+        a.workflowMode === 'execute'
+          ? `
+
+- **Execute mode — in-app web / URLs:** The host intercepts \`start https://...\` (Windows) / \`open\` / \`xdg-open\` in approved \`run_command\` actions and opens the **built-in webview** (Live browser tab). Use this for "go to google.com" instead of telling the user to use an external browser or claiming you cannot open links.`
+          : ''
+      }`
       : ''
   const systemPrefix =
     a.workflowMode === 'vibe' || a.workflowMode === 'execute'
-      ? 'You are running inside Cerebral OS Composer. The host app can write files and run shell commands. Prefer execution via <cerebral_actions> over only giving manual "how to run" checklists for deliverable code.\n\n'
+      ? a.workflowMode === 'execute'
+        ? 'You are running inside Cerebral OS Composer (**Execute**). The host can write files, run shell commands, and—after the user approves your plan—open public https URLs in the **in-app Live browser** via `run_command` (e.g. `start https://...` on Windows). Propose `<cerebral_actions>` with that command when the user asks to visit a site; do not claim you cannot open web pages.\n\n'
+        : 'You are running inside Cerebral OS Composer. The host app can write files and run shell commands. Prefer execution via <cerebral_actions> over only giving manual "how to run" checklists for deliverable code.\n\n'
       : ''
   const system: ChatMsg = { role: 'system', content: systemPrefix + agent.system_prompt + memBlock + wf + add + composerTools }
   const hist: ChatMsg[] = (a.history ?? []).map((h) => ({

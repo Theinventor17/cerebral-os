@@ -5,6 +5,10 @@ import type { CerebralTab } from '../types/cerebral.ts'
 
 const DEFAULT_URL = 'http://127.0.0.1:3000/'
 
+/** Many sites (incl. Google) render blank in Electron without a normal desktop Chrome user agent. */
+const CHROME_LIKE_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
 /** Accept http(s), about:, and file: for local static previews. */
 function normalizeUserUrl(raw: string): string | null {
   let t = raw.trim()
@@ -50,6 +54,7 @@ export function WorkspaceBrowserPanel({ tab }: { tab: CerebralTab }): ReactNode 
   const wvRef = useRef<HTMLElement | null>(null)
   const [canBack, setCanBack] = useState(false)
   const [canFwd, setCanFwd] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const tabId = tab.id
   const lastWrittenUrl = useRef<string | null>(null)
 
@@ -80,13 +85,18 @@ export function WorkspaceBrowserPanel({ tab }: { tab: CerebralTab }): ReactNode 
       }
       lastWrittenUrl.current = u
       const tit = titleForUrl(u)
-      updateTab(tabId, { data: { url: u }, title: tit })
+      updateTab(tabId, { data: { ...(tab.data ?? {}), url: u }, title: tit })
     },
-    [tabId, updateTab]
+    [tabId, tab.data, updateTab]
   )
 
   const bindWebview = useCallback(
     (w: Wv) => {
+      try {
+        w.setUserAgent(CHROME_LIKE_UA)
+      } catch {
+        // ignore
+      }
       const onNav = () => {
         const u = w.getURL()
         if (u) {
@@ -103,14 +113,37 @@ export function WorkspaceBrowserPanel({ tab }: { tab: CerebralTab }): ReactNode 
         }
         updateNav()
       }
+      const onFinish = () => {
+        setLoadError(null)
+        onNav()
+      }
+      const onFail = (e: Event) => {
+        const ev = e as unknown as { errorCode?: number; errorDescription?: string; validatedURL?: string; isMainFrame?: boolean }
+        if (ev.isMainFrame === false) {
+          return
+        }
+        if (ev.errorCode === -3) {
+          return
+        }
+        const msg = ev.errorDescription ?? 'Load failed'
+        const code = ev.errorCode != null ? ` (${ev.errorCode})` : ''
+        setLoadError(`${msg}${code}`)
+      }
+      const onStart = () => {
+        setLoadError(null)
+      }
       w.addEventListener('did-navigate', onDidNav)
       w.addEventListener('did-navigate-in-page', onDidNav)
-      w.addEventListener('did-finish-load', onNav)
+      w.addEventListener('did-finish-load', onFinish)
+      w.addEventListener('did-fail-load', onFail)
+      w.addEventListener('did-start-loading', onStart)
       onNav()
       return () => {
         w.removeEventListener('did-navigate', onDidNav)
         w.removeEventListener('did-navigate-in-page', onDidNav)
-        w.removeEventListener('did-finish-load', onNav)
+        w.removeEventListener('did-finish-load', onFinish)
+        w.removeEventListener('did-fail-load', onFail)
+        w.removeEventListener('did-start-loading', onStart)
       }
     },
     [persistUrl, updateNav]
@@ -175,8 +208,8 @@ export function WorkspaceBrowserPanel({ tab }: { tab: CerebralTab }): ReactNode 
 
   return (
     <div
-      className="cos-embed"
-      style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, background: '#0a0a0a' }}
+      className="cos-browser-panel"
+      style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}
       aria-label="Simple browser"
     >
       <div className="ccomp-exec-bar" style={{ flex: 'none' }}>
@@ -210,18 +243,37 @@ export function WorkspaceBrowserPanel({ tab }: { tab: CerebralTab }): ReactNode 
           External
         </button>
         <span className="ccomp-exec-hint" style={{ flex: '1 1 100%', margin: 0 }}>
-          Use your app dev URL (Vite, Next, etc.); output shows in the terminal.
+          Local dev URLs work best. If a site stays black, use <strong>External</strong> — some pages block embedded browsers.
         </span>
       </div>
-      <div className="ccomp-exec-frame" style={{ flex: 1, minHeight: 0 }}>
+      {loadError && (
+        <div
+          role="alert"
+          style={{
+            flex: 'none',
+            padding: '8px 12px',
+            fontSize: 12,
+            color: '#ffb4a8',
+            background: '#2a1510',
+            borderBottom: '1px solid #4a2820'
+          }}
+        >
+          {loadError}
+        </div>
+      )}
+      <div
+        className="ccomp-exec-frame"
+        style={{ flex: 1, minHeight: 220, position: 'relative', overflow: 'hidden' }}
+      >
         <webview
           ref={(el: HTMLElement | null) => {
             wvRef.current = el
           }}
           className="ccomp-wv"
+          key={activeSrc}
           src={activeSrc}
-          style={{ width: '100%', height: '100%' }}
-          allowpopups="false"
+          allowpopups="true"
+          webpreferences="contextIsolation=true,nodeIntegration=false,sandbox=true"
         />
       </div>
     </div>

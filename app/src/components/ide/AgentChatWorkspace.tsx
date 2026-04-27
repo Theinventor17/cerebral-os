@@ -9,11 +9,14 @@ import { AgentProviderService } from '../../services/AgentProviderService'
 import { formatSessionListTime } from '../../services/sessionTitle'
 import type { AgentMessage, AgentSession, ComposerWorkflowMode, ModelProviderConfig, ResonantAgent, SessionMode } from '../../types'
 import { ComposerAssistantBody } from './composer/ComposerAssistantBody'
-import { ComposerExecutePanel } from './composer/ComposerExecutePanel'
 import { NeuralAlphabetPanel } from '@/cerebral/neural-alphabet/NeuralAlphabetPanel'
 import { useCerebralLayout } from '@/cerebral/context/CerebralTabContext'
 import { WorkspaceApprovalPanel } from '@/cerebral/workspace/WorkspaceApprovalPanel'
 import { executeApprovedWorkspaceActions } from '@/cerebral/workspace/WorkspaceService'
+import {
+  CEREBRAL_EXECUTE_BROWSER_TAB_ID,
+  EXECUTE_LIVE_BROWSER_DEFAULT_URL
+} from '@/cerebral/workspace/executeBrowserConstants'
 import { toWorkspaceRelPath } from './composer/proseFormat'
 
 const suggestions = ['Decompose tasks', 'Prioritize', 'Review risk', 'Outline next steps']
@@ -89,7 +92,7 @@ export function AgentChatWorkspace(): ReactNode {
     clearPendingWorkspace,
     updatePendingWorkspaceActions
   } = useResonantAgents()
-  const { openTab, workspaceRoot, tabs, setActiveTabId } = useCerebralLayout()
+  const { openTab, updateTab, workspaceRoot, tabs, setActiveTabId, activeTabId, hasHydrated } = useCerebralLayout()
   const [workspaceApprovalBusy, setWorkspaceApprovalBusy] = useState(false)
   const onOpenWorkspaceFile = useCallback(
     (relPath: string) => {
@@ -112,6 +115,83 @@ export function AgentChatWorkspace(): ReactNode {
     [openTab, setActiveTabId, tabs]
   )
 
+  const [input, setInput] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [workflow, setWorkflow] = useState<ComposerWorkflowMode>(loadWorkflow)
+
+  const ensureExecuteLiveBrowserTab = useCallback(() => {
+    if (!hasHydrated || !activeAgent) {
+      return
+    }
+    const hasExecuteBrowser = tabs.some(
+      (x) => x.type === 'browser' && String(x.data?.['liveBrowser'] ?? '') === 'execute'
+    )
+    if (hasExecuteBrowser) {
+      return
+    }
+    const active = activeTabId ? tabs.find((x) => x.id === activeTabId) : undefined
+    const insertAfter =
+      active?.type === 'agent_chat'
+        ? active.id
+        : tabs.find((x) => x.type === 'agent_chat' && String(x.data?.['agentId'] ?? '') === activeAgent.id)?.id ??
+          activeTabId ??
+          null
+    openTab(
+      {
+        id: CEREBRAL_EXECUTE_BROWSER_TAB_ID,
+        title: 'Live browser',
+        type: 'browser',
+        data: { url: EXECUTE_LIVE_BROWSER_DEFAULT_URL, liveBrowser: 'execute' }
+      },
+      { activate: false, insertAfterTabId: insertAfter }
+    )
+  }, [hasHydrated, activeAgent, tabs, openTab, activeTabId])
+
+  const onOpenUrlInBrowser = useCallback(
+    (url: string) => {
+      if (!hasHydrated) {
+        return
+      }
+      let title = 'Live browser'
+      try {
+        const h = new URL(url).hostname
+        if (h) {
+          title = h
+        }
+      } catch {
+        // keep
+      }
+      const existing = tabs.find((t) => t.id === CEREBRAL_EXECUTE_BROWSER_TAB_ID)
+      if (existing) {
+        updateTab(CEREBRAL_EXECUTE_BROWSER_TAB_ID, {
+          data: { ...existing.data, url, liveBrowser: 'execute' },
+          title
+        })
+        setActiveTabId(CEREBRAL_EXECUTE_BROWSER_TAB_ID)
+        return
+      }
+      const active = activeTabId ? tabs.find((x) => x.id === activeTabId) : undefined
+      const insertAfter =
+        active?.type === 'agent_chat'
+          ? active.id
+          : (activeAgent &&
+              tabs.find((x) => x.type === 'agent_chat' && String(x.data?.['agentId'] ?? '') === activeAgent.id)?.id) ??
+            activeTabId ??
+            null
+      openTab(
+        {
+          id: CEREBRAL_EXECUTE_BROWSER_TAB_ID,
+          title,
+          type: 'browser',
+          data: { url, liveBrowser: 'execute' }
+        },
+        { activate: true, insertAfterTabId: insertAfter }
+      )
+    },
+    [hasHydrated, tabs, activeTabId, activeAgent, updateTab, openTab, setActiveTabId]
+  )
+
   const onWorkspaceApproveAll = useCallback(async () => {
     if (!pendingWorkspace || !activeAgent || pendingWorkspace.sessionId !== sessionId) {
       return
@@ -121,14 +201,15 @@ export function AgentChatWorkspace(): ReactNode {
       await executeApprovedWorkspaceActions(pendingWorkspace.actions, {
         sessionId: pendingWorkspace.sessionId,
         activeAgent,
-        onOpenFile: onOpenWorkspaceFile
+        onOpenFile: onOpenWorkspaceFile,
+        onOpenUrlInBrowser: onOpenUrlInBrowser
       })
       clearPendingWorkspace()
       void refresh()
     } finally {
       setWorkspaceApprovalBusy(false)
     }
-  }, [pendingWorkspace, activeAgent, sessionId, onOpenWorkspaceFile, clearPendingWorkspace, refresh])
+  }, [pendingWorkspace, activeAgent, sessionId, onOpenWorkspaceFile, onOpenUrlInBrowser, clearPendingWorkspace, refresh])
 
   const onWorkspaceReject = useCallback(() => {
     clearPendingWorkspace()
@@ -148,7 +229,8 @@ export function AgentChatWorkspace(): ReactNode {
         await executeApprovedWorkspaceActions([act], {
           sessionId: pendingWorkspace.sessionId,
           activeAgent,
-          onOpenFile: onOpenWorkspaceFile
+          onOpenFile: onOpenWorkspaceFile,
+          onOpenUrlInBrowser: onOpenUrlInBrowser
         })
         const next = pendingWorkspace.actions.filter((_, j) => j !== index)
         updatePendingWorkspaceActions(next)
@@ -157,13 +239,25 @@ export function AgentChatWorkspace(): ReactNode {
         setWorkspaceApprovalBusy(false)
       }
     },
-    [pendingWorkspace, activeAgent, sessionId, onOpenWorkspaceFile, updatePendingWorkspaceActions, refresh]
+    [pendingWorkspace, activeAgent, sessionId, onOpenWorkspaceFile, onOpenUrlInBrowser, updatePendingWorkspaceActions, refresh]
   )
 
-  const [input, setInput] = useState('')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
-  const [workflow, setWorkflow] = useState<ComposerWorkflowMode>(loadWorkflow)
+  const onWorkflowChange = useCallback(
+    (w: ComposerWorkflowMode) => {
+      setWorkflow(w)
+      if (w === 'execute') {
+        ensureExecuteLiveBrowserTab()
+      }
+    },
+    [ensureExecuteLiveBrowserTab]
+  )
+
+  useEffect(() => {
+    if (workflow !== 'execute') {
+      return
+    }
+    ensureExecuteLiveBrowserTab()
+  }, [workflow, ensureExecuteLiveBrowserTab])
 
   useEffect(() => {
     try {
@@ -299,7 +393,7 @@ export function AgentChatWorkspace(): ReactNode {
         onEndSession={() => void endSession()}
       />
 
-      <div className={workflow === 'execute' ? 'ccomp-main ccomp-main--exec' : 'ccomp-main'}>
+      <div className="ccomp-main">
         {(sessionMode === 'thought' || sessionMode === 'hybrid') && insightLive && (
           <div style={{ padding: '0 12px 8px' }}>
             <NeuralAlphabetPanel />
@@ -391,8 +485,16 @@ export function AgentChatWorkspace(): ReactNode {
               Waiting for first token from provider…
             </p>
           )}
+          {workflow === 'execute' && (
+            <p className="ccomp-hint" style={{ marginTop: 8 }}>
+              <strong>Live browser</strong> is a tab next to your chat. Approve a run like{' '}
+              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono, ui-monospace, monospace)' }}>
+                start https://…
+              </code>{' '}
+              to open that URL in the built-in webview (not the system browser).
+            </p>
+          )}
         </div>
-        {workflow === 'execute' && <ComposerExecutePanel />}
       </div>
 
       <div className="ccomp-suggest">
@@ -449,7 +551,7 @@ export function AgentChatWorkspace(): ReactNode {
         activeAgent={activeAgent}
         refresh={refresh}
         workflow={workflow}
-        onWorkflowChange={setWorkflow}
+        onWorkflowChange={onWorkflowChange}
         onSend={onSend}
         onScrollMessagesToEnd={scrollToMessagesEnd}
       />

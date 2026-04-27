@@ -3,13 +3,17 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { CerebralActivityId, CerebralTab } from '../types/cerebral.ts'
 import { saveLayoutPatch } from '../layout/layoutStore'
 
+type OpenTabOptions = { activate?: boolean; insertAfterTabId?: string | null }
+
 type Ctx = {
   activity: CerebralActivityId
   setActivity: (a: CerebralActivityId) => void
+  /** True after the initial workspace tab list is loaded from SQLite (avoid races with openTab). */
+  hasHydrated: boolean
   tabs: CerebralTab[]
   activeTabId: string | null
   setActiveTabId: (id: string | null) => void
-  openTab: (t: CerebralTab) => void
+  openTab: (t: CerebralTab, options?: OpenTabOptions) => void
   closeTab: (id: string) => void
   markDirty: (id: string, dirty: boolean) => void
   updateTab: (id: string, partial: Partial<CerebralTab>) => void
@@ -97,27 +101,32 @@ export function CerebralTabProvider({ children }: { children: ReactNode }): Reac
 
   useEffect(() => {
     void (async () => {
-      const ws = await window.cerebral.workspace.default()
-      if (ws.rootPath) {
-        setWorkspaceRoot(ws.rootPath)
-      }
-      const dbTabs = (await window.cerebral.tabs.get(W)) as Array<Record<string, unknown>>
-      if (dbTabs.length > 0) {
-        const next = rowsToTabs(dbTabs)
-        setTabs(next)
-        setActiveTabId(next[0]?.id ?? null)
+      try {
+        const ws = await window.cerebral.workspace.default()
+        if (ws.rootPath) {
+          setWorkspaceRoot(ws.rootPath)
+        }
+        const dbTabs = (await window.cerebral.tabs.get(W)) as Array<Record<string, unknown>>
+        if (dbTabs.length > 0) {
+          const next = rowsToTabs(dbTabs)
+          setTabs(next)
+          setActiveTabId(next[0]?.id ?? null)
+          return
+        }
+        const agents = (await window.ra.agent.list()) as Array<{ id: string; name: string }>
+        if (agents.length) {
+          const a = agents[0]
+          const t: CerebralTab = { id: crypto.randomUUID(), title: `${a.name}.chat`, type: 'agent_chat', data: { agentId: a.id } }
+          setTabs([t])
+          setActiveTabId(t.id)
+          void window.cerebral.tabs.replace({ workspaceId: W, tabs: tabsToRows([t]) })
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[Cerebral] Tab hydration failed', e)
+      } finally {
         setHasHydrated(true)
-        return
       }
-      const agents = (await window.ra.agent.list()) as Array<{ id: string; name: string }>
-      if (agents.length) {
-        const a = agents[0]
-        const t: CerebralTab = { id: crypto.randomUUID(), title: `${a.name}.chat`, type: 'agent_chat', data: { agentId: a.id } }
-        setTabs([t])
-        setActiveTabId(t.id)
-        void window.cerebral.tabs.replace({ workspaceId: W, tabs: tabsToRows([t]) })
-      }
-      setHasHydrated(true)
     })()
   }, [])
 
@@ -146,15 +155,25 @@ export function CerebralTabProvider({ children }: { children: ReactNode }): Reac
     saveLayoutPatch({ activity, bottomTab, rightTab })
   }, [hasHydrated, activity, bottomTab, rightTab])
 
-  const openTab = useCallback((t: CerebralTab) => {
+  const openTab = useCallback((t: CerebralTab, options?: OpenTabOptions) => {
+    const shouldActivate = options?.activate !== false
+    const after = options?.insertAfterTabId
     setTabs((prev) => {
       const ex = prev.find((x) => x.id === t.id)
       if (ex) {
         return prev
       }
+      if (after) {
+        const j = prev.findIndex((x) => x.id === after)
+        if (j >= 0) {
+          return [...prev.slice(0, j + 1), t, ...prev.slice(j + 1)]
+        }
+      }
       return [...prev, t]
     })
-    setActiveTabId(t.id)
+    if (shouldActivate) {
+      setActiveTabId(t.id)
+    }
   }, [])
 
   const closeTab = useCallback((id: string) => {
@@ -177,7 +196,18 @@ export function CerebralTabProvider({ children }: { children: ReactNode }): Reac
   }, [])
 
   const updateTab = useCallback((id: string, partial: Partial<CerebralTab>) => {
-    setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, ...partial } : t)))
+    setTabs((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) {
+          return t
+        }
+        const next: CerebralTab = { ...t, ...partial }
+        if (partial.data != null && t.data != null) {
+          next.data = { ...t.data, ...partial.data } as Record<string, unknown>
+        }
+        return next
+      })
+    )
   }, [])
 
   const openAgentChat = useCallback((agentId: string, name: string) => {
@@ -218,6 +248,7 @@ export function CerebralTabProvider({ children }: { children: ReactNode }): Reac
     () => ({
       activity,
       setActivity,
+      hasHydrated,
       tabs,
       activeTabId,
       setActiveTabId,
@@ -236,6 +267,7 @@ export function CerebralTabProvider({ children }: { children: ReactNode }): Reac
     }),
     [
       activity,
+      hasHydrated,
       tabs,
       activeTabId,
       openTab,

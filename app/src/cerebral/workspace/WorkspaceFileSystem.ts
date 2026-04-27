@@ -1,5 +1,6 @@
 import type { WorkspaceAction } from './WorkspaceTypes'
 import { runStreamedWorkspaceCommand } from './WorkspaceRunner'
+import { tryGetUrlFromShellOpenCommand } from './parseOpenUrlCommand'
 
 const WID = 'default'
 
@@ -62,6 +63,8 @@ export async function executeWorkspaceAction(
   action: WorkspaceAction,
   opts: {
     onCommandChunk?: (stream: 'stdout' | 'stderr', data: string) => void
+    /** When a command is e.g. `start https://…`, open here instead of the system browser. */
+    onOpenUrlInBrowser?: (url: string) => void
   }
 ): Promise<{ lines: string[] }> {
   const lines: string[] = []
@@ -117,6 +120,14 @@ export async function executeWorkspaceAction(
       break
     }
     case 'run_command': {
+      const fromShell = tryGetUrlFromShellOpenCommand(action.command)
+      if (fromShell && opts.onOpenUrlInBrowser) {
+        opts.onOpenUrlInBrowser(fromShell)
+        lines.push(
+          `- **Opened in built-in browser** \`${fromShell}\` (skipped OS \`start\` / \`open\` so the app webview is used)\n`
+        )
+        break
+      }
       const runId = crypto.randomUUID()
       try {
         const result = await runStreamedWorkspaceCommand(runId, action.command, WID, {

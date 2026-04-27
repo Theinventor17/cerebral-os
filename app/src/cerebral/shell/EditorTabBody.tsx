@@ -137,7 +137,14 @@ export function EditorTabBody({ tab }: { tab: CerebralTab }): ReactNode {
       )
     }
     case 'browser':
-      return <WorkspaceBrowserPanel key={tab.id} tab={tab} />
+      return (
+        <div
+          className="cos-embed cos-embed--browser"
+          style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+        >
+          <WorkspaceBrowserPanel key={tab.id} tab={tab} />
+        </div>
+      )
     default:
       return (
         <div className="cos-empty">
